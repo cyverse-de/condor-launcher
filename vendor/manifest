@@ -34,6 +34,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/cyverse-de/version",
+			"repository": "https://github.com/cyverse-de/version",
+			"vcs": "git",
+			"revision": "bf48f0d262aaa844cab4fe5b49834a74fb235bf3",
+			"branch": "dev",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/olebedev/config",
 			"repository": "https://github.com/olebedev/config",
 			"vcs": "git",
