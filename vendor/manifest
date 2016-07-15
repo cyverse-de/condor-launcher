@@ -1,0 +1,69 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/cyverse-de/configurate",
+			"repository": "https://github.com/cyverse-de/configurate",
+			"vcs": "git",
+			"revision": "ed79fb9e4130d02b44ce1057fe4441edc0bea3b0",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cyverse-de/logcabin",
+			"repository": "https://github.com/cyverse-de/logcabin",
+			"vcs": "git",
+			"revision": "7d501f64e734aea8e7923220b5fcc4642fb01121",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cyverse-de/messaging",
+			"repository": "https://github.com/cyverse-de/messaging",
+			"vcs": "git",
+			"revision": "fa41704b23267dfbd7c666fcd371922257acf48e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/cyverse-de/model",
+			"repository": "https://github.com/cyverse-de/model",
+			"vcs": "git",
+			"revision": "b860e3566f5d1f6ad4803228cb8c1684c781add7",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/olebedev/config",
+			"repository": "https://github.com/olebedev/config",
+			"vcs": "git",
+			"revision": "dd1049a3738432dfc49417e2ae5bd97e132ecac6",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/streadway/amqp",
+			"repository": "https://github.com/streadway/amqp",
+			"vcs": "git",
+			"revision": "2e25825abdbd7752ff08b270d313b93519a0a232",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/check.v1",
+			"repository": "https://gopkg.in/check.v1",
+			"vcs": "git",
+			"revision": "4f90aeace3a26ad7021961c297b22c42160c7b25",
+			"branch": "v1",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/yaml.v2",
+			"repository": "https://gopkg.in/yaml.v2",
+			"vcs": "git",
+			"revision": "e4d366fc3c7938e2958e662b4258c7a89e1f0e3e",
+			"branch": "v2",
+			"notests": true
+		}
+	]
+}

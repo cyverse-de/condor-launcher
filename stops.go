@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"logcabin"
-	"messaging"
-	"model"
 	"os/exec"
 	"path"
 	"path/filepath"
+
+	"github.com/cyverse-de/logcabin"
+	"github.com/cyverse-de/messaging"
+	"github.com/cyverse-de/model"
 
 	"github.com/streadway/amqp"
 )

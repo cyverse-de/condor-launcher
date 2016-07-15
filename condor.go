@@ -31,20 +31,21 @@ package main
 
 import (
 	"bytes"
-	"configurate"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"logcabin"
-	"messaging"
-	"model"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"text/template"
 	"time"
+
+	"github.com/cyverse-de/configurate"
+	"github.com/cyverse-de/logcabin"
+	"github.com/cyverse-de/messaging"
+	"github.com/cyverse-de/model"
 
 	"github.com/olebedev/config"
 	"github.com/streadway/amqp"
