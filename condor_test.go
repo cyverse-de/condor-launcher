@@ -1,19 +1,20 @@
 package main
 
 import (
-	"configurate"
 	"fmt"
 	"io/ioutil"
-	"model"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/cyverse-de/configurate"
+	"github.com/cyverse-de/model"
 
 	"github.com/olebedev/config"
 )
 
 func JSONData() ([]byte, error) {
-	f, err := os.Open("../test/test_submission.json")
+	f, err := os.Open("test/test_submission.json")
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +33,7 @@ var (
 func _inittests(t *testing.T, memoize bool) *model.Job {
 	var err error
 	if s == nil || !memoize {
-		cfg, err = configurate.Init("../test/test_config.yaml")
+		cfg, err = configurate.Init("test/test_config.yaml")
 		if err != nil {
 			t.Error(err)
 		}
@@ -57,7 +58,7 @@ func _inittests(t *testing.T, memoize bool) *model.Job {
 		if err != nil {
 			t.Error(err)
 		}
-		PATH := fmt.Sprintf("../test/:%s", os.Getenv("PATH"))
+		PATH := fmt.Sprintf("test/:%s", os.Getenv("PATH"))
 		err = os.Setenv("PATH", PATH)
 		if err != nil {
 			t.Error(err)
