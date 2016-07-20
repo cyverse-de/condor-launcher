@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-read -r -d '' output << EOM
+echo '
 RecentBlockReadKbytes = 0
 IpcJobId = "generated_script"
 BlockWrites = 0
@@ -369,7 +369,4 @@ StartdPrincipal = "unauthenticated@unmapped/150.135.78.112"
 ResidentSetSize_RAW = 9488
 RequestDisk = 0
 OrigMaxHosts = 1
-RecentBlockReads = 0
-EOM
-
-printf "%s" "$output"
+RecentBlockReads = 0'
