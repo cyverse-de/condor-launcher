@@ -41,12 +41,12 @@ import (
 	"path/filepath"
 	"text/template"
 	"time"
-	"version"
 
 	"github.com/cyverse-de/configurate"
 	"github.com/cyverse-de/logcabin"
 	"github.com/cyverse-de/messaging"
 	"github.com/cyverse-de/model"
+	"github.com/cyverse-de/version"
 
 	"github.com/olebedev/config"
 	"github.com/streadway/amqp"
