@@ -3,7 +3,7 @@ def dockerUser = "discoenv"
 
 node {
     stage "Build"
-    git url: "https://github.com/cyverse-de/${repo}", branch: "${env.BRANCH_NAME}"
+    checkout scm
 
     sh 'git rev-parse HEAD > GIT_COMMIT'
     git_commit = readFile('GIT_COMMIT').trim()
