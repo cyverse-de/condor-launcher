@@ -1,4 +1,4 @@
-FROM golang:1.6-alpine
+FROM golang:1.6
 
 ARG git_commit=unknown
 LABEL org.cyverse.git-ref="$git_commit"
