@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cyverse-de/model/submitfile"
 	"github.com/olebedev/config"
 )
 
@@ -93,6 +94,7 @@ type Job struct {
 	Submitter          string         `json:"username"`
 	Type               string         `json:"type"`
 	UserID             string         `json:"user_id"`
+	UserGroups         []string       `json:"user_groups"`
 	WikiURL            string         `json:"wiki_url"`
 }
 
@@ -351,6 +353,12 @@ func (s *Job) FinalOutputArguments() []string {
 		retval = append(retval, "--skip-parent-meta")
 	}
 	return retval
+}
+
+// FormatUserGroups converts the list of user groups to the list format used by the
+// HTCondor job submission file.
+func (s *Job) FormatUserGroups() string {
+	return submitfile.FormatList(s.UserGroups)
 }
 
 // FileMetadata describes a unit of metadata that should get associated with

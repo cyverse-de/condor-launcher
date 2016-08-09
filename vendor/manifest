@@ -5,7 +5,7 @@
 			"importpath": "github.com/cyverse-de/configurate",
 			"repository": "https://github.com/cyverse-de/configurate",
 			"vcs": "git",
-			"revision": "ed79fb9e4130d02b44ce1057fe4441edc0bea3b0",
+			"revision": "556dd65830fe6096b26638302b1f055cdd003221",
 			"branch": "master",
 			"notests": true
 		},
@@ -13,7 +13,7 @@
 			"importpath": "github.com/cyverse-de/logcabin",
 			"repository": "https://github.com/cyverse-de/logcabin",
 			"vcs": "git",
-			"revision": "7d501f64e734aea8e7923220b5fcc4642fb01121",
+			"revision": "7a3aa512933277796b9f0fd55cdd0b67d05bfc3c",
 			"branch": "master",
 			"notests": true
 		},
@@ -21,7 +21,7 @@
 			"importpath": "github.com/cyverse-de/messaging",
 			"repository": "https://github.com/cyverse-de/messaging",
 			"vcs": "git",
-			"revision": "fa41704b23267dfbd7c666fcd371922257acf48e",
+			"revision": "d790754ea90b647a4e4bfe7a22b1e40b68785746",
 			"branch": "master",
 			"notests": true
 		},
@@ -29,7 +29,7 @@
 			"importpath": "github.com/cyverse-de/model",
 			"repository": "https://github.com/cyverse-de/model",
 			"vcs": "git",
-			"revision": "b860e3566f5d1f6ad4803228cb8c1684c781add7",
+			"revision": "144746393fcd6d7e06d74605abc0089534544e59",
 			"branch": "master",
 			"notests": true
 		},
@@ -37,7 +37,7 @@
 			"importpath": "github.com/cyverse-de/version",
 			"repository": "https://github.com/cyverse-de/version",
 			"vcs": "git",
-			"revision": "bf48f0d262aaa844cab4fe5b49834a74fb235bf3",
+			"revision": "5119d6500655edb891bd2a37a1e1d255f168bbb6",
 			"branch": "dev",
 			"notests": true
 		},
