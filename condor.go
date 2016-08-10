@@ -80,6 +80,7 @@ request_disk = {{.RequestDisk}}
 +IpcUuid = "{{.InvocationID}}"
 +IpcJobId = "generated_script"
 +IpcUsername = "{{.Submitter}}"
++IpcUserGroups = {{.FormatUserGroups}}
 concurrency_limits = {{.UserIDForSubmission}}
 {{with $x := index .Steps 0}}+IpcExe = "{{$x.Component.Name}}"{{end}}
 {{with $x := index .Steps 0}}+IpcExePath = "{{$x.Component.Location}}"{{end}}
