@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/cyverse-de/model/submitfile"
-	"github.com/olebedev/config"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -104,28 +104,16 @@ type Job struct {
 //  * condor.log_path
 //  * condor.filter_files
 //  * irods.base
-func New(cfg *config.Config) *Job {
+func New(cfg *viper.Viper) *Job {
 	n := time.Now().Format(nowfmt)
-	rq, err := cfg.String("condor.request_disk")
-	if err != nil {
-		rq = ""
-	}
-	lp, err := cfg.String("condor.log_path")
-	if err != nil {
-		lp = ""
-	}
+	rq := cfg.GetString("condor.request_disk")
+	lp := cfg.GetString("condor.log_path")
 	var paths []string
-	filterFiles, err := cfg.String("condor.filter_files")
-	if err != nil {
-		filterFiles = ""
-	}
+	filterFiles := cfg.GetString("condor.filter_files")
 	for _, filter := range strings.Split(filterFiles, ",") {
 		paths = append(paths, filter)
 	}
-	irodsBase, err := cfg.String("irods.base")
-	if err != nil {
-		irodsBase = "/"
-	}
+	irodsBase := cfg.GetString("irods.base")
 	return &Job{
 		NowDate:        n,
 		SubmissionDate: n,
@@ -139,7 +127,7 @@ func New(cfg *config.Config) *Job {
 
 // NewFromData creates a new submission and populates it by parsing the passed
 // in []byte as JSON.
-func NewFromData(cfg *config.Config, data []byte) (*Job, error) {
+func NewFromData(cfg *viper.Viper, data []byte) (*Job, error) {
 	var err error
 	s := New(cfg)
 	err = json.Unmarshal(data, s)

@@ -36,15 +36,9 @@ func (cl *CondorLauncher) ExecCondorQ() ([]byte, error) {
 
 	cmd := exec.Command(csPath, "-long")
 
-	pathEnv, err := cl.cfg.String("condor.path_env_var")
-	if err != nil {
-		pathEnv = ""
-	}
+	pathEnv := cl.cfg.GetString("condor.path_env_var")
 
-	condorCfg, err := cl.cfg.String("condor.condor_config")
-	if err != nil {
-		condorCfg = ""
-	}
+	condorCfg := cl.cfg.GetString("condor.condor_config")
 
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", pathEnv),
@@ -80,15 +74,9 @@ func (cl *CondorLauncher) ExecCondorRm(condorID string) ([]byte, error) {
 		}
 	}
 
-	pathEnv, err := cl.cfg.String("condor.path_env_var")
-	if err != nil {
-		pathEnv = ""
-	}
+	pathEnv := cl.cfg.GetString("condor.path_env_var")
 
-	condorConfig, err := cl.cfg.String("condor.condor_config")
-	if err != nil {
-		condorConfig = ""
-	}
+	condorConfig := cl.cfg.GetString("condor.condor_config")
 
 	cmd := exec.Command(crPath, condorID)
 	cmd.Env = []string{

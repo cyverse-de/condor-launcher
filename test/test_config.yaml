@@ -27,7 +27,7 @@ irods:
   user: wut
   pass: wut
   host: wut.iplantc.org
-  port: 1247
+  port: "1247"
   zone: iplant
   resc: ""
 
