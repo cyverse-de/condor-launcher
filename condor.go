@@ -48,17 +48,17 @@ import (
 	"github.com/cyverse-de/model"
 	"github.com/cyverse-de/version"
 
-	"github.com/olebedev/config"
+	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
 )
 
 // CondorLauncher contains the condor-launcher application state.
 type CondorLauncher struct {
-	cfg *config.Config
+	cfg *viper.Viper
 }
 
 // New returns a new *CondorLauncher
-func New(c *config.Config) *CondorLauncher {
+func New(c *viper.Viper) *CondorLauncher {
 	return &CondorLauncher{
 		cfg: c,
 	}
@@ -113,14 +113,14 @@ type scriptable struct {
 // into the job.
 func (cl *CondorLauncher) GenerateJobConfig() (string, error) {
 	tmpl := `amqp:
-  uri: {{.String "amqp.uri"}}
+  uri: {{.GetString "amqp.uri"}}
 irods:
-  base: "{{.String "irods.base"}}"
+  base: "{{.GetString "irods.base"}}"
 porklock:
-  image: "{{.String "porklock.image"}}"
-  tag: "{{.String "porklock.tag"}}"
+  image: "{{.GetString "porklock.image"}}"
+  tag: "{{.GetString "porklock.tag"}}"
 condor:
-  filter_files: "{{.String "condor.filter_files"}}"`
+  filter_files: "{{.GetString "condor.filter_files"}}"`
 	t, err := template.New("job_config").Parse(tmpl)
 	if err != nil {
 		return "", err
@@ -157,34 +157,13 @@ porklock.irods-resc = {{.IRODSResc}}
 	if err != nil {
 		return "", err
 	}
-	irodsHost, err := cl.cfg.String("irods.host")
-	if err != nil {
-		return "", err
-	}
-	irodsPort, err := cl.cfg.String("irods.port")
-	if err != nil {
-		return "", err
-	}
-	irodsUser, err := cl.cfg.String("irods.user")
-	if err != nil {
-		return "", err
-	}
-	irodsPass, err := cl.cfg.String("irods.pass")
-	if err != nil {
-		return "", err
-	}
-	irodsBase, err := cl.cfg.String("irods.base")
-	if err != nil {
-		return "", err
-	}
-	irodsResc, err := cl.cfg.String("irods.resc")
-	if err != nil {
-		return "", err
-	}
-	irodsZone, err := cl.cfg.String("irods.zone")
-	if err != nil {
-		return "", err
-	}
+	irodsHost := cl.cfg.GetString("irods.host")
+	irodsPort := cl.cfg.GetString("irods.port")
+	irodsUser := cl.cfg.GetString("irods.user")
+	irodsPass := cl.cfg.GetString("irods.pass")
+	irodsBase := cl.cfg.GetString("irods.base")
+	irodsResc := cl.cfg.GetString("irods.resc")
+	irodsZone := cl.cfg.GetString("irods.zone")
 	c := &irodsconfig{
 		IRODSHost: irodsHost,
 		IRODSPort: irodsPort,
@@ -279,15 +258,8 @@ func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
 
 	cmd := exec.Command(csPath, cmdPath)
 	cmd.Dir = path.Dir(cmdPath)
-	pathEnv, err := cl.cfg.String("condor.path_env_var")
-	if err != nil {
-		pathEnv = ""
-	}
-
-	condorCfg, err := cl.cfg.String("condor.condor_config")
-	if err != nil {
-		condorCfg = ""
-	}
+	pathEnv := cl.cfg.GetString("condor.path_env_var")
+	condorCfg := cl.cfg.GetString("condor.condor_config")
 
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", pathEnv),
@@ -343,15 +315,8 @@ func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
 		}
 	}
 
-	pathEnv, err := cl.cfg.String("condor.path_env_var")
-	if err != nil {
-		pathEnv = ""
-	}
-
-	condorConfig, err := cl.cfg.String("condor.condor_config")
-	if err != nil {
-		condorConfig = ""
-	}
+	pathEnv := cl.cfg.GetString("condor.path_env_var")
+	condorConfig := cl.cfg.GetString("condor.condor_config")
 
 	cmd := exec.Command(crPath, s.CondorID)
 	cmd.Env = []string{
@@ -408,7 +373,7 @@ func main() {
 		os.Exit(-1)
 	}
 
-	cfg, err := configurate.Init(*cfgPath)
+	cfg, err := configurate.InitDefaults(*cfgPath, configurate.JobServicesDefaults)
 	if err != nil {
 		logcabin.Error.Fatal(err)
 	}
@@ -416,10 +381,7 @@ func main() {
 
 	launcher := New(cfg)
 
-	uri, err := cfg.String("amqp.uri")
-	if err != nil {
-		logcabin.Error.Fatal(err)
-	}
+	uri := cfg.GetString("amqp.uri")
 
 	client, err := messaging.NewClient(uri, true)
 	if err != nil {

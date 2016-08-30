@@ -10,7 +10,7 @@ import (
 	"github.com/cyverse-de/configurate"
 	"github.com/cyverse-de/model"
 
-	"github.com/olebedev/config"
+	"github.com/spf13/viper"
 )
 
 func JSONData() ([]byte, error) {
@@ -27,13 +27,13 @@ func JSONData() ([]byte, error) {
 
 var (
 	s   *model.Job
-	cfg *config.Config
+	cfg *viper.Viper
 )
 
 func _inittests(t *testing.T, memoize bool) *model.Job {
 	var err error
 	if s == nil || !memoize {
-		cfg, err = configurate.Init("test/test_config.yaml")
+		cfg, err = configurate.InitDefaults("test/test_config.yaml", configurate.JobServicesDefaults)
 		if err != nil {
 			t.Error(err)
 		}
@@ -149,10 +149,7 @@ func TestCreateSubmissionDirectory(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	logPath, err := cl.cfg.String("condor.log_path")
-	if err != nil {
-		t.Error(err)
-	}
+	logPath := cl.cfg.GetString("condor.log_path")
 	parent := path.Join(logPath, s.Submitter)
 	err = os.RemoveAll(parent)
 	if err != nil {
@@ -166,11 +163,11 @@ func TestCreateSubmissionFiles(t *testing.T) {
 	cl := New(cfg)
 	dir, err := cl.CreateSubmissionDirectory(s)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	cmd, sh, c, err := cl.CreateSubmissionFiles(dir, s)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	_, err = os.Stat(cmd)
 	if err != nil {
@@ -189,10 +186,7 @@ func TestCreateSubmissionFiles(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	logPath, err := cl.cfg.String("condor.log_path")
-	if err != nil {
-		t.Error(err)
-	}
+	logPath := cl.cfg.GetString("condor.log_path")
 	parent := path.Join(logPath, s.Submitter)
 	err = os.RemoveAll(parent)
 	if err != nil {
@@ -225,10 +219,7 @@ func TestCondorSubmit(t *testing.T) {
 	if actual != expected {
 		t.Errorf("CondorSubmit() returned %s instead of %s", actual, expected)
 	}
-	logPath, err := cl.cfg.String("condor.log_path")
-	if err != nil {
-		t.Error(err)
-	}
+	logPath := cl.cfg.GetString("condor.log_path")
 	parent := path.Join(logPath, s.Submitter)
 	err = os.RemoveAll(parent)
 	if err != nil {
