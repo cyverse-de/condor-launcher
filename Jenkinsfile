@@ -1,3 +1,4 @@
+#!groovy
 def repo = "condor-launcher"
 def dockerUser = "discoenv"
 
