@@ -32,13 +32,17 @@ func GetClient(t *testing.T) *messaging.Client {
 	if err != nil {
 		t.Error(err)
 	}
-	client.SetupPublishing(messaging.JobsExchange)
+	client.SetupPublishing(exchangeName())
 	go client.Listen()
 	return client
 }
 
 func messagingURI() string {
-	return "amqp://guest:guest@rabbit:5672/"
+	return "amqp://guest:guest@rabbit:5672/%2fde"
+}
+
+func exchangeName() string {
+	return "de"
 }
 
 var (

@@ -1,7 +1,7 @@
 amqp:
-  uri: amqp://guest:guest@rabbit:5672/
+  uri: amqp://guest:guest@rabbit:5672/%2fde
   exchange:
-    name: jobs
+    name: de
     type: topic
     durable: true
     autodelete: false
