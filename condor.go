@@ -50,6 +50,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
+	"github.com/constabulary/gb/testdata/src/d.v1"
 )
 
 // CondorLauncher contains the condor-launcher application state.
@@ -382,6 +383,8 @@ func main() {
 	launcher := New(cfg)
 
 	uri := cfg.GetString("amqp.uri")
+	exchangeName := cfg.GetString("amqp.exchange.name")
+	exchangeType := cfg.GetString("amqp.exchange.type")
 
 	client, err := messaging.NewClient(uri, true)
 	if err != nil {
@@ -389,7 +392,7 @@ func main() {
 	}
 	defer client.Close()
 
-	client.SetupPublishing(messaging.JobsExchange)
+	client.SetupPublishing(exchangeName)
 
 	go client.Listen()
 
@@ -402,7 +405,7 @@ func main() {
 	launcher.RegisterStopHandler(client)
 
 	// Accept and handle messages sent out with the jobs.launches routing key.
-	client.AddConsumer(messaging.JobsExchange, "topic", "condor_launches", messaging.LaunchesKey, func(d amqp.Delivery) {
+	client.AddConsumer(exchangeName, exchangeType, "condor_launches", messaging.LaunchesKey, func(d amqp.Delivery) {
 		body := d.Body
 		d.Ack(false)
 

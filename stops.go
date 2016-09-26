@@ -256,5 +256,7 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 
 // RegisterStopHandler registers a handler for all stop requests.
 func (cl *CondorLauncher) RegisterStopHandler(client *messaging.Client) {
-	client.AddConsumer(messaging.JobsExchange, "topic", "condor-launcher-stops", messaging.StopRequestKey("*"), cl.stopHandler(client))
+	exchangeName := cl.cfg.GetString("amqp.exchange.name")
+	exchangeType := cl.cfg.GetString("amqp.exchange.type")
+	client.AddConsumer(exchangeName, exchangeType, "condor-launcher-stops", messaging.StopRequestKey("*"), cl.stopHandler(client))
 }
