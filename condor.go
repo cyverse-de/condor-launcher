@@ -114,6 +114,9 @@ type scriptable struct {
 func (cl *CondorLauncher) GenerateJobConfig() (string, error) {
 	tmpl := `amqp:
   uri: {{.GetString "amqp.uri"}}
+  exchange:
+    name: {{.GetString "amqp.exchange.name"}}
+    type: {{.GetString "amqp.exchange.type"}}
 irods:
   base: "{{.GetString "irods.base"}}"
 porklock:
