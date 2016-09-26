@@ -50,7 +50,6 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
-	"github.com/constabulary/gb/testdata/src/d.v1"
 )
 
 // CondorLauncher contains the condor-launcher application state.
