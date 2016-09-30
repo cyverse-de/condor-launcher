@@ -43,6 +43,7 @@ import (
 	"time"
 
 	"github.com/cyverse-de/configurate"
+	"github.com/cyverse-de/go-events/ping"
 	"github.com/cyverse-de/logcabin"
 	"github.com/cyverse-de/messaging"
 	"github.com/cyverse-de/model"
@@ -52,15 +53,20 @@ import (
 	"github.com/streadway/amqp"
 )
 
+const pingKey = "events.condor-launcher.ping"
+const pongKey = "events.condor-launcher.pong"
+
 // CondorLauncher contains the condor-launcher application state.
 type CondorLauncher struct {
-	cfg *viper.Viper
+	cfg    *viper.Viper
+	client *messaging.Client
 }
 
 // New returns a new *CondorLauncher
-func New(c *viper.Viper) *CondorLauncher {
+func New(c *viper.Viper, client *messaging.Client) *CondorLauncher {
 	return &CondorLauncher{
-		cfg: c,
+		cfg:    c,
+		client: client,
 	}
 }
 
@@ -352,6 +358,37 @@ func (cl *CondorLauncher) startHeldTicker(client *messaging.Client) (*time.Ticke
 	return t, nil
 }
 
+// handlePing is the handler for ping events.
+func (cl *CondorLauncher) handlePing(delivery amqp.Delivery) {
+	logcabin.Info.Println("Received ping")
+
+	out, err := json.Marshal(&ping.Pong{})
+	if err != nil {
+		logcabin.Error.Print(err)
+	}
+
+	logcabin.Info.Println("Sent pong")
+
+	if err = cl.client.Publish(pongKey, out); err != nil {
+		logcabin.Error.Print(err)
+	}
+}
+
+// handleEvents accepts an amqp message, acks it, and delegates handling it to
+// another function.
+func (cl *CondorLauncher) handleEvents(delivery amqp.Delivery) {
+	if err := delivery.Ack(false); err != nil {
+		logcabin.Error.Print(err)
+	}
+
+	switch delivery.RoutingKey {
+	case pingKey:
+		cl.handlePing(delivery)
+	default:
+		logcabin.Error.Printf("unhandled event with routing key of %s", delivery.RoutingKey)
+	}
+}
+
 func main() {
 	var (
 		cfgPath     = flag.String("config", "", "Path to the config file. Required.")
@@ -379,8 +416,6 @@ func main() {
 	}
 	logcabin.Info.Println("Done reading config.")
 
-	launcher := New(cfg)
-
 	uri := cfg.GetString("amqp.uri")
 	exchangeName := cfg.GetString("amqp.exchange.name")
 	exchangeType := cfg.GetString("amqp.exchange.type")
@@ -391,9 +426,11 @@ func main() {
 	}
 	defer client.Close()
 
-	client.SetupPublishing(exchangeName)
+	launcher := New(cfg, client)
 
-	go client.Listen()
+	launcher.client.SetupPublishing(exchangeName)
+
+	go launcher.client.Listen()
 
 	ticker, err := launcher.startHeldTicker(client)
 	if err != nil {
@@ -403,8 +440,16 @@ func main() {
 
 	launcher.RegisterStopHandler(client)
 
+	launcher.client.AddConsumer(
+		exchangeName,
+		exchangeType,
+		"condor_launcher_events",
+		"events.condor-launcher.*",
+		launcher.handleEvents,
+	)
+
 	// Accept and handle messages sent out with the jobs.launches routing key.
-	client.AddConsumer(exchangeName, exchangeType, "condor_launches", messaging.LaunchesKey, func(d amqp.Delivery) {
+	launcher.client.AddConsumer(exchangeName, exchangeType, "condor_launches", messaging.LaunchesKey, func(d amqp.Delivery) {
 		body := d.Body
 		d.Ack(false)
 
