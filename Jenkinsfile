@@ -31,13 +31,25 @@ node('docker') {
             stage "Docker Push"
             dockerPushRepo = "${service.dockerUser}/${service.repo}:${env.BRANCH_NAME}"
             sh "docker tag ${dockerRepo} ${dockerPushRepo}"
-            sh "docker push ${dockerPushRepo}"
+            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'jenkins-docker-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME']]) {
+                sh """docker run -e DOCKER_USERNAME -e DOCKER_PASSWORD \\
+                                 -v /var/run/docker.sock:/var/run/docker.sock \\
+                                 --rm --name ${dockerPusher} \\
+                                 docker:\$(docker version --format '{{ .Server.Version }}') \\
+                                 sh -e -c \\
+                      'docker login -u \"\$DOCKER_USERNAME\" -p \"\$DOCKER_PASSWORD\" && \\
+                       docker push ${dockerPushRepo} && \\
+                       docker logout'"""
+            }
         } finally {
             sh returnStatus: true, script: "docker kill ${dockerTestRunner}"
             sh returnStatus: true, script: "docker rm ${dockerTestRunner}"
 
             sh returnStatus: true, script: "docker kill ${dockerTestCleanup}"
             sh returnStatus: true, script: "docker rm ${dockerTestCleanup}"
+
+            sh returnStatus: true, script: "docker kill ${dockerPusher}"
+            sh returnStatus: true, script: "docker rm ${dockerPusher}"
 
             sh returnStatus: true, script: "docker rmi ${dockerRepo}"
         }
