@@ -73,7 +73,7 @@ func inittests(t *testing.T) *model.Job {
 
 func TestGenerateCondorSubmit(t *testing.T) {
 	s := inittests(t)
-	cl := New(cfg)
+	cl := New(cfg, nil)
 	actual, err := cl.GenerateCondorSubmit(s)
 	if err != nil {
 		t.Error(err)
@@ -140,7 +140,7 @@ queue
 
 func TestCreateSubmissionDirectory(t *testing.T) {
 	s := inittests(t)
-	cl := New(cfg)
+	cl := New(cfg, nil)
 	dir, err := cl.CreateSubmissionDirectory(s)
 	if err != nil {
 		t.Error(err)
@@ -160,7 +160,7 @@ func TestCreateSubmissionDirectory(t *testing.T) {
 
 func TestCreateSubmissionFiles(t *testing.T) {
 	s := inittests(t)
-	cl := New(cfg)
+	cl := New(cfg, nil)
 	dir, err := cl.CreateSubmissionDirectory(s)
 	if err != nil {
 		t.Fatal(err)
@@ -202,7 +202,7 @@ func TestCondorSubmit(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	cl := New(cfg)
+	cl := New(cfg, nil)
 	dir, err := cl.CreateSubmissionDirectory(s)
 	if err != nil {
 		t.Error(err)
@@ -229,7 +229,7 @@ func TestCondorSubmit(t *testing.T) {
 
 func TestLaunch(t *testing.T) {
 	inittests(t)
-	cl := New(cfg)
+	cl := New(cfg, nil)
 	data, err := JSONData()
 	if err != nil {
 		t.Error(err)
@@ -255,7 +255,7 @@ func TestLaunch(t *testing.T) {
 
 func TestStop(t *testing.T) {
 	inittests(t)
-	cl := New(cfg)
+	cl := New(cfg, nil)
 	//Start up a fake jex-events
 	jr := &model.Job{
 		CondorID:     "10000",
