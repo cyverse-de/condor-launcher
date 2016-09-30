@@ -499,9 +499,13 @@ func main() {
 	)
 
 	// Accept and handle messages sent out with the jobs.launches routing key.
-	launcher.client.AddConsumer(exchangeName, exchangeType, "condor_launches", messaging.LaunchesKey, func(d amqp.Delivery) {
-
-	})
+	launcher.client.AddConsumer(
+		exchangeName,
+		exchangeType,
+		"condor_launches",
+		messaging.LaunchesKey,
+		launcher.handleLaunchRequests,
+	)
 
 	spin := make(chan int)
 	<-spin
