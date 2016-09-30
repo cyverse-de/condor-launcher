@@ -392,6 +392,53 @@ func (cl *CondorLauncher) handleEvents(delivery amqp.Delivery) {
 	}
 }
 
+// handleLaunchRequests triggers Condor jobs in response to launch request messages.
+func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
+	body := delivery.Body
+
+	if err := delivery.Ack(false); err != nil {
+		logcabin.Error.Print(err)
+	}
+
+	req := messaging.JobRequest{}
+	err := json.Unmarshal(body, &req)
+	if err != nil {
+		logcabin.Error.Print(err)
+		logcabin.Error.Print(string(body[:]))
+		return
+	}
+
+	if req.Job.RequestDisk == "" {
+		req.Job.RequestDisk = "0"
+	}
+
+	switch req.Command {
+	case messaging.Launch:
+		jobID, err := cl.launch(req.Job)
+		if err != nil {
+			logcabin.Error.Print(err)
+			err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
+				Job:     req.Job,
+				State:   messaging.FailedState,
+				Message: fmt.Sprintf("condor-launcher failed to launch job:\n %s", err),
+			})
+			if err != nil {
+				logcabin.Error.Print(err)
+			}
+		} else {
+			logcabin.Info.Printf("Launched Condor ID %s", jobID)
+			err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
+				Job:     req.Job,
+				State:   messaging.SubmittedState,
+				Message: fmt.Sprintf("Launched Condor ID %s", jobID),
+			})
+			if err != nil {
+				logcabin.Error.Print(err)
+			}
+		}
+	}
+}
+
 func main() {
 	var (
 		cfgPath     = flag.String("config", "", "Path to the config file. Required.")
@@ -453,46 +500,7 @@ func main() {
 
 	// Accept and handle messages sent out with the jobs.launches routing key.
 	launcher.client.AddConsumer(exchangeName, exchangeType, "condor_launches", messaging.LaunchesKey, func(d amqp.Delivery) {
-		body := d.Body
-		d.Ack(false)
 
-		req := messaging.JobRequest{}
-		err := json.Unmarshal(body, &req)
-		if err != nil {
-			logcabin.Error.Print(err)
-			logcabin.Error.Print(string(body[:]))
-			return
-		}
-
-		if req.Job.RequestDisk == "" {
-			req.Job.RequestDisk = "0"
-		}
-
-		switch req.Command {
-		case messaging.Launch:
-			jobID, err := launcher.launch(req.Job)
-			if err != nil {
-				logcabin.Error.Print(err)
-				err = client.PublishJobUpdate(&messaging.UpdateMessage{
-					Job:     req.Job,
-					State:   messaging.FailedState,
-					Message: fmt.Sprintf("condor-launcher failed to launch job:\n %s", err),
-				})
-				if err != nil {
-					logcabin.Error.Print(err)
-				}
-			} else {
-				logcabin.Info.Printf("Launched Condor ID %s", jobID)
-				err = client.PublishJobUpdate(&messaging.UpdateMessage{
-					Job:     req.Job,
-					State:   messaging.SubmittedState,
-					Message: fmt.Sprintf("Launched Condor ID %s", jobID),
-				})
-				if err != nil {
-					logcabin.Error.Print(err)
-				}
-			}
-		}
 	})
 
 	spin := make(chan int)
