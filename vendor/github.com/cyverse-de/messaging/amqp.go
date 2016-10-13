@@ -30,15 +30,6 @@ var (
 	//LaunchCommand is the string used in LaunchCo
 	LaunchCommand = "LAUNCH"
 
-	//JobsExchange is the name of the exchange that job related info is passed around.
-	JobsExchange = "jobs"
-
-	//ReindexExchange is the name of the exchange that full-reindex info is passed around on.
-	ReindexExchange = "de"
-
-	//IncrementalExchange is the name of the exchange that incremental update info is passed around on.
-	IncrementalExchange = "de"
-
 	//ReindexAllKey is the routing/binding key for full reindex messages.
 	ReindexAllKey = "index.all"
 
@@ -78,6 +69,10 @@ var (
 
 	//RunningState is when a job is running.
 	RunningState JobState = "Running"
+
+	//ImpendingCancellationState is when a job is running but the current step is about
+	//to reach its expiration time.
+	ImpendingCancellationState JobState = "ImpendingCancellation"
 
 	//SucceededState is when a job has successfully completed the required steps.
 	SucceededState JobState = "Completed"
