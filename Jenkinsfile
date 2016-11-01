@@ -43,6 +43,7 @@ node('docker') {
                                    sh -e -c \\
                         'docker login -u \"\$DOCKER_USERNAME\" -p \"\$DOCKER_PASSWORD\" && \\
                          docker push ${dockerPushRepo} && \\
+                         docker rmi ${dockerPushRepo} && \\
                          docker logout'"""
               }
             }
