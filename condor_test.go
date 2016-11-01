@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -8,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/cyverse-de/configurate"
+	"github.com/cyverse-de/messaging"
 	"github.com/cyverse-de/model"
+	"github.com/streadway/amqp"
 
 	"github.com/spf13/viper"
 )
@@ -71,9 +74,43 @@ func inittests(t *testing.T) *model.Job {
 	return _inittests(t, true)
 }
 
+type filerecord struct {
+	path     string
+	contents []byte
+	mode     os.FileMode
+}
+
+type tsys struct {
+	dirsCreated  map[string]os.FileMode
+	filesWritten []filerecord
+}
+
+// newTSys creates a new instance of tsys.
+func newtsys() *tsys {
+	return &tsys{
+		dirsCreated:  make(map[string]os.FileMode, 0),
+		filesWritten: make([]filerecord, 0),
+	}
+}
+
+func (t *tsys) MkdirAll(path string, mode os.FileMode) error {
+	t.dirsCreated[path] = mode
+	return nil
+}
+
+func (t *tsys) WriteFile(path string, contents []byte, mode os.FileMode) error {
+	t.filesWritten = append(t.filesWritten, filerecord{
+		path:     path,
+		contents: contents,
+		mode:     mode,
+	})
+	return nil
+}
+
 func TestGenerateCondorSubmit(t *testing.T) {
 	s := inittests(t)
-	cl := New(cfg, nil)
+	filesystem := newtsys()
+	cl := New(cfg, nil, filesystem)
 	actual, err := cl.GenerateCondorSubmit(s)
 	if err != nil {
 		t.Error(err)
@@ -140,7 +177,8 @@ queue
 
 func TestCreateSubmissionDirectory(t *testing.T) {
 	s := inittests(t)
-	cl := New(cfg, nil)
+	filesystem := newtsys()
+	cl := New(cfg, nil, filesystem)
 	dir, err := cl.CreateSubmissionDirectory(s)
 	if err != nil {
 		t.Error(err)
@@ -160,7 +198,8 @@ func TestCreateSubmissionDirectory(t *testing.T) {
 
 func TestCreateSubmissionFiles(t *testing.T) {
 	s := inittests(t)
-	cl := New(cfg, nil)
+	filesystem := newtsys()
+	cl := New(cfg, nil, filesystem)
 	dir, err := cl.CreateSubmissionDirectory(s)
 	if err != nil {
 		t.Fatal(err)
@@ -197,12 +236,13 @@ func TestCreateSubmissionFiles(t *testing.T) {
 
 func TestCondorSubmit(t *testing.T) {
 	s := inittests(t)
+	filesystem := newtsys()
 	PATH := fmt.Sprintf(".:%s", os.Getenv("PATH"))
 	err := os.Setenv("PATH", PATH)
 	if err != nil {
 		t.Error(err)
 	}
-	cl := New(cfg, nil)
+	cl := New(cfg, nil, filesystem)
 	dir, err := cl.CreateSubmissionDirectory(s)
 	if err != nil {
 		t.Error(err)
@@ -229,7 +269,8 @@ func TestCondorSubmit(t *testing.T) {
 
 func TestLaunch(t *testing.T) {
 	inittests(t)
-	cl := New(cfg, nil)
+	filesystem := newtsys()
+	cl := New(cfg, nil, filesystem)
 	data, err := JSONData()
 	if err != nil {
 		t.Error(err)
@@ -255,7 +296,8 @@ func TestLaunch(t *testing.T) {
 
 func TestStop(t *testing.T) {
 	inittests(t)
-	cl := New(cfg, nil)
+	filesystem := newtsys()
+	cl := New(cfg, nil, filesystem)
 	//Start up a fake jex-events
 	jr := &model.Job{
 		CondorID:     "10000",
@@ -269,5 +311,117 @@ func TestStop(t *testing.T) {
 	}
 	if actual == "" {
 		t.Errorf("stop returned an empty string")
+	}
+}
+
+type MockConsumer struct {
+	exchange     string
+	exchangeType string
+	queue        string
+	key          string
+	handler      messaging.MessageHandler
+}
+
+type MockMessage struct {
+	key string
+	msg []byte
+}
+
+type MockMessenger struct {
+	consumers         []MockConsumer
+	publishedMessages []MockMessage
+	publishTo         []string
+	publishError      bool
+}
+
+func (m *MockMessenger) Close()  {}
+func (m *MockMessenger) Listen() {}
+
+func (m *MockMessenger) AddConsumer(exchange, exchangeType, queue, key string, handler messaging.MessageHandler) {
+	m.consumers = append(m.consumers, MockConsumer{
+		exchange:     exchange,
+		exchangeType: exchangeType,
+		queue:        queue,
+		key:          key,
+		handler:      handler,
+	})
+}
+
+func (m *MockMessenger) Publish(key string, msg []byte) error {
+	if m.publishError {
+		return errors.New("publish error")
+	}
+	m.publishedMessages = append(m.publishedMessages, MockMessage{key: key, msg: msg})
+	return nil
+}
+
+func (m *MockMessenger) PublishJobUpdate(update *messaging.UpdateMessage) error {
+	if m.publishError {
+		return errors.New("publish error")
+	}
+	m.publishedMessages = append(m.publishedMessages, MockMessage{key: "foo", msg: []byte(update.Message)})
+	return nil
+}
+
+func (m *MockMessenger) SetupPublishing(exchange string) error {
+
+	m.publishTo = append(m.publishTo, exchange)
+	return nil
+}
+
+func TestHandlePing(t *testing.T) {
+	inittests(t)
+	client := &MockMessenger{
+		publishedMessages: make([]MockMessage, 0),
+	}
+	filesystem := newtsys()
+	launcher := New(cfg, client, filesystem)
+	delivery := amqp.Delivery{
+		RoutingKey: "events.condor-launcher.ping",
+	}
+	launcher.handlePing(delivery)
+	mm := launcher.client.(*MockMessenger)
+	if len(mm.publishedMessages) != 1 {
+		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))
+	}
+	if mm.publishedMessages[0].key != pongKey {
+		t.Errorf("routing key was %s instead of %s", mm.publishedMessages[0].key, pongKey)
+	}
+}
+
+func TestHandleEvents(t *testing.T) {
+	inittests(t)
+	client := &MockMessenger{
+		publishedMessages: make([]MockMessage, 0),
+	}
+	filesystem := newtsys()
+	launcher := New(cfg, client, filesystem)
+	delivery := amqp.Delivery{
+		RoutingKey: "events.condor-launcher.ping",
+	}
+	launcher.handleEvents(delivery)
+	mm := launcher.client.(*MockMessenger)
+	if len(mm.publishedMessages) != 1 {
+		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))
+	}
+	if mm.publishedMessages[0].key != pongKey {
+		t.Errorf("routing key was %s instead of %s", mm.publishedMessages[0].key, pongKey)
+	}
+}
+
+func TestHandleBadEvents(t *testing.T) {
+	inittests(t)
+	client := &MockMessenger{
+		publishedMessages: make([]MockMessage, 0),
+	}
+	filesystem := newtsys()
+	launcher := New(cfg, client, filesystem)
+	delivery := amqp.Delivery{
+		RoutingKey: "events.condor-launcher.pinadsfasdfg",
+	}
+	launcher.handleEvents(delivery)
+	mm := launcher.client.(*MockMessenger)
+	if len(mm.publishedMessages) != 0 {
+		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))
 	}
 }

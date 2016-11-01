@@ -56,17 +56,47 @@ import (
 const pingKey = "events.condor-launcher.ping"
 const pongKey = "events.condor-launcher.pong"
 
+// Messenger defines an interface for handling AMQP operations. This is the
+// subset of functionality needed by job-status-recorder.
+type Messenger interface {
+	AddConsumer(string, string, string, string, messaging.MessageHandler)
+	Close()
+	Listen()
+	Publish(string, []byte) error
+	SetupPublishing(string) error
+	PublishJobUpdate(*messaging.UpdateMessage) error
+}
+
+// fsys defines an interface for file operations.
+type fsys interface {
+	MkdirAll(string, os.FileMode) error
+	WriteFile(string, []byte, os.FileMode) error
+}
+
+// osys is an implementation of fsys that hits the os and ioutil packages.
+type osys struct{}
+
+func (o *osys) MkdirAll(path string, mode os.FileMode) error {
+	return os.MkdirAll(path, mode)
+}
+
+func (o *osys) WriteFile(path string, contents []byte, mode os.FileMode) error {
+	return ioutil.WriteFile(path, contents, mode)
+}
+
 // CondorLauncher contains the condor-launcher application state.
 type CondorLauncher struct {
 	cfg    *viper.Viper
-	client *messaging.Client
+	client Messenger
+	fs     fsys
 }
 
 // New returns a new *CondorLauncher
-func New(c *viper.Viper, client *messaging.Client) *CondorLauncher {
+func New(c *viper.Viper, client Messenger, fs fsys) *CondorLauncher {
 	return &CondorLauncher{
 		cfg:    c,
 		client: client,
+		fs:     fs,
 	}
 }
 
@@ -476,7 +506,8 @@ func main() {
 	}
 	defer client.Close()
 
-	launcher := New(cfg, client)
+	localfs := &osys{}
+	launcher := New(cfg, client, localfs)
 
 	launcher.client.SetupPublishing(exchangeName)
 
