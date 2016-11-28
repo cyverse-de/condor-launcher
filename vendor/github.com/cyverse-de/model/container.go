@@ -58,3 +58,11 @@ func (c *Container) WorkingDirectory() string {
 	}
 	return c.WorkingDir
 }
+
+// UsesVolumes returns a boolean value which indicates if a container uses host-mounted volumes
+func (c *Container) UsesVolumes() bool {
+	if len(c.Volumes) > 0 {
+		return true
+	}
+	return false
+}

@@ -56,6 +56,11 @@ func (s *Step) IsBackwardsCompatible() bool {
 		strings.HasPrefix(img, "gims.iplantcollaborative.org:5000/backwards-compat")
 }
 
+// UsesVolumes returns a boolean value which indicates if a step uses host-mounted volumes
+func (s *Step) UsesVolumes() bool {
+	return s.Component.Container.UsesVolumes()
+}
+
 // Executable returns a string containing the executable path as it gets placed
 // inside the docker command-line.
 func (s *Step) Executable() string {

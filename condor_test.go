@@ -16,8 +16,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-func JSONData() ([]byte, error) {
-	f, err := os.Open("test/test_submission.json")
+func JSONData(filename string) ([]byte, error) {
+	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -33,39 +33,44 @@ var (
 	cfg *viper.Viper
 )
 
-func _inittests(t *testing.T, memoize bool) *model.Job {
+func inittestsFile(t *testing.T, filename string) *model.Job {
 	var err error
+	cfg, err = configurate.InitDefaults("test/test_config.yaml", configurate.JobServicesDefaults)
+	if err != nil {
+		t.Error(err)
+	}
+	cfg.Set("irods.base", "/path/to/irodsbase")
+	cfg.Set("irods.host", "hostname")
+	cfg.Set("irods.port", "1247")
+	cfg.Set("irods.user", "user")
+	cfg.Set("irods.pass", "pass")
+	cfg.Set("irods.zone", "test")
+	cfg.Set("irods.resc", "")
+	cfg.Set("condor.log_path", "../test/tmp")
+	cfg.Set("condor.porklock_tag", "test")
+	cfg.Set("condor.filter_files", "foo,bar,baz,blippy")
+	cfg.Set("condor.request_disk", "0")
+	cfg.Set("condor.path_env_var", "/path/to/path")
+	cfg.Set("condor.condor_config", "/condor/config")
+	data, err := JSONData(filename)
+	if err != nil {
+		t.Error(err)
+	}
+	s, err = model.NewFromData(cfg, data)
+	if err != nil {
+		t.Error(err)
+	}
+	PATH := fmt.Sprintf("test/:%s", os.Getenv("PATH"))
+	err = os.Setenv("PATH", PATH)
+	if err != nil {
+		t.Error(err)
+	}
+	return s
+}
+
+func _inittests(t *testing.T, memoize bool) *model.Job {
 	if s == nil || !memoize {
-		cfg, err = configurate.InitDefaults("test/test_config.yaml", configurate.JobServicesDefaults)
-		if err != nil {
-			t.Error(err)
-		}
-		cfg.Set("irods.base", "/path/to/irodsbase")
-		cfg.Set("irods.host", "hostname")
-		cfg.Set("irods.port", "1247")
-		cfg.Set("irods.user", "user")
-		cfg.Set("irods.pass", "pass")
-		cfg.Set("irods.zone", "test")
-		cfg.Set("irods.resc", "")
-		cfg.Set("condor.log_path", "../test/tmp")
-		cfg.Set("condor.porklock_tag", "test")
-		cfg.Set("condor.filter_files", "foo,bar,baz,blippy")
-		cfg.Set("condor.request_disk", "0")
-		cfg.Set("condor.path_env_var", "/path/to/path")
-		cfg.Set("condor.condor_config", "/condor/config")
-		data, err := JSONData()
-		if err != nil {
-			t.Error(err)
-		}
-		s, err = model.NewFromData(cfg, data)
-		if err != nil {
-			t.Error(err)
-		}
-		PATH := fmt.Sprintf("test/:%s", os.Getenv("PATH"))
-		err = os.Setenv("PATH", PATH)
-		if err != nil {
-			t.Error(err)
-		}
+		s = inittestsFile(t, "test/test_submission.json")
 	}
 	return s
 }
@@ -118,6 +123,7 @@ func TestGenerateCondorSubmit(t *testing.T) {
 	expected := `universe = vanilla
 executable = /usr/local/bin/road-runner
 rank = mips
+requirements = (HAS_HOST_MOUNTS == True)
 arguments = --config config --job job
 output = script-output.log
 error = script-error.log
@@ -140,14 +146,21 @@ queue
 	if actual != expected {
 		t.Errorf("GenerateCondorSubmit() returned:\n\n%s\n\ninstead of:\n\n%s", actual, expected)
 	}
+}
+
+func TestGenerateCondorSubmitGroup(t *testing.T) {
+	s := inittests(t)
+	filesystem := newtsys()
+	cl := New(cfg, nil, filesystem)
 	s.Group = "foo"
-	actual, err = cl.GenerateCondorSubmit(s)
+	actual, err := cl.GenerateCondorSubmit(s)
 	if err != nil {
 		t.Error(err)
 	}
-	expected = `universe = vanilla
+	expected := `universe = vanilla
 executable = /usr/local/bin/road-runner
 rank = mips
+requirements = (HAS_HOST_MOUNTS == True)
 arguments = --config config --job job
 output = script-output.log
 error = script-error.log
@@ -173,6 +186,41 @@ queue
 		t.Errorf("GenerateCondorSubmit() returned:\n\n%s\n\ninstead of:\n\n%s", actual, expected)
 	}
 	_inittests(t, false)
+}
+
+func TestGenerateCondorSubmitNoVolumes(t *testing.T) {
+	s := inittestsFile(t, "test/no_volumes_submission.json")
+	filesystem := newtsys()
+	cl := New(cfg, nil, filesystem)
+	actual, err := cl.GenerateCondorSubmit(s)
+	if err != nil {
+		t.Error(err)
+	}
+	expected := `universe = vanilla
+executable = /usr/local/bin/road-runner
+rank = mips
+arguments = --config config --job job
+output = script-output.log
+error = script-error.log
+log = condor.log
+request_disk = 0
++IpcUuid = "07b04ce2-7757-4b21-9e15-0b4c2f44be26"
++IpcJobId = "generated_script"
++IpcUsername = "test_this_is_a_test"
++IpcUserGroups = {"groups:foo","groups:bar","groups:baz"}
+concurrency_limits = _00000000000000000000000000000000
++IpcExe = "wc_wrapper.sh"
++IpcExePath = "/usr/local3/bin/wc_tool-1.00"
+should_transfer_files = YES
+transfer_input_files = irods-config,iplant.cmd,config,job
+transfer_output_files = logs/de-transfer-trigger.log,logs/logs-stdout-output,logs/logs-stderr-output
+when_to_transfer_output = ON_EXIT_OR_EVICT
+notification = NEVER
+queue
+`
+	if actual != expected {
+		t.Errorf("GenerateCondorSubmit() returned:\n\n%s\n\ninstead of:\n\n%s", actual, expected)
+	}
 }
 
 func TestCreateSubmissionDirectory(t *testing.T) {
@@ -271,7 +319,7 @@ func TestLaunch(t *testing.T) {
 	inittests(t)
 	filesystem := newtsys()
 	cl := New(cfg, nil, filesystem)
-	data, err := JSONData()
+	data, err := JSONData("test/test_submission.json")
 	if err != nil {
 		t.Error(err)
 	}
