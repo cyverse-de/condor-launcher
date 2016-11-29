@@ -105,7 +105,8 @@ func New(c *viper.Viper, client Messenger, fs fsys) *CondorLauncher {
 func (cl *CondorLauncher) GenerateCondorSubmit(submission *model.Job) (string, error) {
 	tmpl := `universe = vanilla
 executable = /usr/local/bin/road-runner
-rank = mips
+rank = mips{{ if .UsesVolumes }}
+requirements = (HAS_HOST_MOUNTS == True){{ end }}
 arguments = --config config --job job
 output = script-output.log
 error = script-error.log

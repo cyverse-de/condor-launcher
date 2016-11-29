@@ -349,6 +349,16 @@ func (s *Job) FormatUserGroups() string {
 	return submitfile.FormatList(s.UserGroups)
 }
 
+// UsesVolumes returns a boolean value which indicates if any step of a job uses host-mounted volumes
+func (s *Job) UsesVolumes() bool {
+	for _, step := range s.Steps {
+		if step.UsesVolumes() {
+			return true
+		}
+	}
+	return false
+}
+
 // FileMetadata describes a unit of metadata that should get associated with
 // all of the files associated with the job submission.
 type FileMetadata struct {
