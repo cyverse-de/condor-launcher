@@ -19,6 +19,7 @@ type Device struct {
 type VolumesFrom struct {
 	Tag           string `json:"tag"`
 	Name          string `json:"name"`
+	Auth          string `json:"auth"`
 	NamePrefix    string `json:"name_prefix"`
 	URL           string `json:"url"`
 	HostPath      string `json:"host_path"`
@@ -31,6 +32,7 @@ type ContainerImage struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 	Tag  string `json:"tag"`
+	Auth string `json:"auth"`
 	URL  string `json:"url"`
 }
 
