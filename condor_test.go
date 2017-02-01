@@ -138,7 +138,7 @@ concurrency_limits = _00000000000000000000000000000000
 +IpcExePath = "/usr/local3/bin/wc_tool-1.00"
 should_transfer_files = YES
 transfer_input_files = irods-config,iplant.cmd,config,job
-transfer_output_files = logs/de-transfer-trigger.log,logs/logs-stdout-output,logs/logs-stderr-output
+transfer_output_files = workingvolume/logs/de-transfer-trigger.log,workingvolume/logs/logs-stdout-output,workingvolume/logs/logs-stderr-output
 when_to_transfer_output = ON_EXIT_OR_EVICT
 notification = NEVER
 queue
@@ -177,7 +177,7 @@ concurrency_limits = _00000000000000000000000000000000
 +IpcExePath = "/usr/local3/bin/wc_tool-1.00"
 should_transfer_files = YES
 transfer_input_files = irods-config,iplant.cmd,config,job
-transfer_output_files = logs/de-transfer-trigger.log,logs/logs-stdout-output,logs/logs-stderr-output
+transfer_output_files = workingvolume/logs/de-transfer-trigger.log,workingvolume/logs/logs-stdout-output,workingvolume/logs/logs-stderr-output
 when_to_transfer_output = ON_EXIT_OR_EVICT
 notification = NEVER
 queue
@@ -213,7 +213,7 @@ concurrency_limits = _00000000000000000000000000000000
 +IpcExePath = "/usr/local3/bin/wc_tool-1.00"
 should_transfer_files = YES
 transfer_input_files = irods-config,iplant.cmd,config,job
-transfer_output_files = logs/de-transfer-trigger.log,logs/logs-stdout-output,logs/logs-stderr-output
+transfer_output_files = workingvolume/logs/de-transfer-trigger.log,workingvolume/logs/logs-stdout-output,workingvolume/logs/logs-stderr-output
 when_to_transfer_output = ON_EXIT_OR_EVICT
 notification = NEVER
 queue
