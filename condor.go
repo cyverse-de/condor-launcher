@@ -44,10 +44,10 @@ import (
 
 	"github.com/cyverse-de/configurate"
 	"github.com/cyverse-de/go-events/ping"
+	"github.com/cyverse-de/logcabin"
 	"github.com/cyverse-de/messaging"
 	"github.com/cyverse-de/model"
 	"github.com/cyverse-de/version"
-	"github.com/johnworth/logcabin"
 	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/viper"
