@@ -461,7 +461,10 @@ func TestCondorID(t *testing.T) {
 func TestExecCondorQ(t *testing.T) {
 	inittests(t)
 	filesystem := newtsys()
-	cl := New(cfg, nil, filesystem)
+	cl, err := New(cfg, nil, filesystem)
+	if err != nil {
+		t.Error(err)
+	}
 	output, err := cl.ExecCondorQ()
 	if err != nil {
 		t.Error(err)
@@ -509,7 +512,10 @@ func TestExecCondorQ(t *testing.T) {
 func TestExecCondorRm(t *testing.T) {
 	inittests(t)
 	filesystem := newtsys()
-	cl := New(cfg, nil, filesystem)
+	cl, err := New(cfg, nil, filesystem)
+	if err != nil {
+		t.Error(err)
+	}
 	actual, err := cl.ExecCondorRm("foo")
 	if err != nil {
 		t.Error(err)
@@ -531,7 +537,10 @@ func TestStopHandler(t *testing.T) {
 	}
 	inittests(t)
 	filesystem := newtsys()
-	cl := New(cfg, nil, filesystem)
+	cl, err := New(cfg, nil, filesystem)
+	if err != nil {
+		t.Error(err)
+	}
 	stopMsg := messaging.StopRequest{
 		InvocationID: "b788569f-6948-4586-b5bd-5ea096986331",
 	}

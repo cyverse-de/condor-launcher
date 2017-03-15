@@ -56,6 +56,60 @@ import (
 const pingKey = "events.condor-launcher.ping"
 const pongKey = "events.condor-launcher.pong"
 
+// SubmissionTemplateText is the text of the template for the HTCondor
+// submission file.
+const SubmissionTemplateText = `universe = vanilla
+executable = /usr/local/bin/road-runner
+rank = mips{{ if .UsesVolumes }}
+requirements = (HAS_HOST_MOUNTS == True){{ end }}
+arguments = --config config --job job
+output = script-output.log
+error = script-error.log
+log = condor.log{{if .Group}}
+accounting_group = {{.Group}}
+accounting_group_user = {{.Submitter}}{{end}}
+request_disk = {{.RequestDisk}}
++IpcUuid = "{{.InvocationID}}"
++IpcJobId = "generated_script"
++IpcUsername = "{{.Submitter}}"
++IpcUserGroups = {{.FormatUserGroups}}
+concurrency_limits = {{.UserIDForSubmission}}
+{{with $x := index .Steps 0}}+IpcExe = "{{$x.Component.Name}}"{{end}}
+{{with $x := index .Steps 0}}+IpcExePath = "{{$x.Component.Location}}"{{end}}
+should_transfer_files = YES
+transfer_input_files = irods-config,iplant.cmd,config,job
+transfer_output_files = workingvolume/logs/logs-stdout-output,workingvolume/logs/logs-stderr-output
+when_to_transfer_output = ON_EXIT_OR_EVICT
+notification = NEVER
+queue
+`
+
+// JobConfigTemplateText is the text of the template for the HTCondor submission
+// file.
+const JobConfigTemplateText = `amqp:
+uri: {{.GetString "amqp.uri"}}
+exchange:
+	name: {{.GetString "amqp.exchange.name"}}
+	type: {{.GetString "amqp.exchange.type"}}
+irods:
+base: "{{.GetString "irods.base"}}"
+porklock:
+image: "{{.GetString "porklock.image"}}"
+tag: "{{.GetString "porklock.tag"}}"
+condor:
+filter_files: "{{.GetString "condor.filter_files"}}"`
+
+// IRODSConfigTemplateText is the text of the template for porklock's iRODS
+// config file.
+const IRODSConfigTemplateText = `porklock.irods-host = {{.IRODSHost}}
+porklock.irods-port = {{.IRODSPort}}
+porklock.irods-user = {{.IRODSUser}}
+porklock.irods-pass = {{.IRODSPass}}
+porklock.irods-home = {{.IRODSBase}}
+porklock.irods-zone = {{.IRODSZone}}
+porklock.irods-resc = {{.IRODSResc}}
+`
+
 // Messenger defines an interface for handling AMQP operations. This is the
 // subset of functionality needed by job-status-recorder.
 type Messenger interface {
@@ -86,54 +140,44 @@ func (o *osys) WriteFile(path string, contents []byte, mode os.FileMode) error {
 
 // CondorLauncher contains the condor-launcher application state.
 type CondorLauncher struct {
-	cfg    *viper.Viper
-	client Messenger
-	fs     fsys
+	cfg                 *viper.Viper
+	client              Messenger
+	fs                  fsys
+	submissionTemplate  *template.Template
+	jobConfigTemplate   *template.Template
+	irodsConfigTemplate *template.Template
 }
 
 // New returns a new *CondorLauncher
-func New(c *viper.Viper, client Messenger, fs fsys) *CondorLauncher {
-	return &CondorLauncher{
+func New(c *viper.Viper, client Messenger, fs fsys) (*CondorLauncher, error) {
+	cl := &CondorLauncher{
 		cfg:    c,
 		client: client,
 		fs:     fs,
 	}
+	st, err := template.New("condor_submit").Parse(SubmissionTemplateText)
+	if err != nil {
+		return cl, err
+	}
+	cl.submissionTemplate = st
+	jct, err := template.New("job_config").Parse(JobConfigTemplateText)
+	if err != nil {
+		return cl, err
+	}
+	cl.jobConfigTemplate = jct
+	ict, err := template.New("irods_config").Parse(IRODSConfigTemplateText)
+	if err != nil {
+		return cl, err
+	}
+	cl.irodsConfigTemplate = ict
+	return cl, err
 }
 
 // GenerateCondorSubmit returns a string (or error) containing the contents
 // of what should go into an HTCondor submission file.
 func (cl *CondorLauncher) GenerateCondorSubmit(submission *model.Job) (string, error) {
-	tmpl := `universe = vanilla
-executable = /usr/local/bin/road-runner
-rank = mips{{ if .UsesVolumes }}
-requirements = (HAS_HOST_MOUNTS == True){{ end }}
-arguments = --config config --job job
-output = script-output.log
-error = script-error.log
-log = condor.log{{if .Group}}
-accounting_group = {{.Group}}
-accounting_group_user = {{.Submitter}}{{end}}
-request_disk = {{.RequestDisk}}
-+IpcUuid = "{{.InvocationID}}"
-+IpcJobId = "generated_script"
-+IpcUsername = "{{.Submitter}}"
-+IpcUserGroups = {{.FormatUserGroups}}
-concurrency_limits = {{.UserIDForSubmission}}
-{{with $x := index .Steps 0}}+IpcExe = "{{$x.Component.Name}}"{{end}}
-{{with $x := index .Steps 0}}+IpcExePath = "{{$x.Component.Location}}"{{end}}
-should_transfer_files = YES
-transfer_input_files = irods-config,iplant.cmd,config,job
-transfer_output_files = workingvolume/logs/logs-stdout-output,workingvolume/logs/logs-stderr-output
-when_to_transfer_output = ON_EXIT_OR_EVICT
-notification = NEVER
-queue
-`
-	t, err := template.New("condor_submit").Parse(tmpl)
-	if err != nil {
-		return "", err
-	}
 	var buffer bytes.Buffer
-	err = t.Execute(&buffer, submission)
+	err := cl.submissionTemplate.Execute(&buffer, submission)
 	if err != nil {
 		return "", err
 	}
@@ -149,24 +193,8 @@ type scriptable struct {
 // GenerateJobConfig creates a string containing the config that gets passed
 // into the job.
 func (cl *CondorLauncher) GenerateJobConfig() (string, error) {
-	tmpl := `amqp:
-  uri: {{.GetString "amqp.uri"}}
-  exchange:
-    name: {{.GetString "amqp.exchange.name"}}
-    type: {{.GetString "amqp.exchange.type"}}
-irods:
-  base: "{{.GetString "irods.base"}}"
-porklock:
-  image: "{{.GetString "porklock.image"}}"
-  tag: "{{.GetString "porklock.tag"}}"
-condor:
-  filter_files: "{{.GetString "condor.filter_files"}}"`
-	t, err := template.New("job_config").Parse(tmpl)
-	if err != nil {
-		return "", err
-	}
 	var buffer bytes.Buffer
-	err = t.Execute(&buffer, cl.cfg)
+	err := cl.jobConfigTemplate.Execute(&buffer, cl.cfg)
 	if err != nil {
 		return "", err
 	}
@@ -185,36 +213,17 @@ type irodsconfig struct {
 
 // GenerateIRODSConfig returns the contents of the irods-config file as a string.
 func (cl *CondorLauncher) GenerateIRODSConfig() (string, error) {
-	tmpl := `porklock.irods-host = {{.IRODSHost}}
-porklock.irods-port = {{.IRODSPort}}
-porklock.irods-user = {{.IRODSUser}}
-porklock.irods-pass = {{.IRODSPass}}
-porklock.irods-home = {{.IRODSBase}}
-porklock.irods-zone = {{.IRODSZone}}
-porklock.irods-resc = {{.IRODSResc}}
-`
-	t, err := template.New("irods_config").Parse(tmpl)
-	if err != nil {
-		return "", err
-	}
-	irodsHost := cl.cfg.GetString("irods.host")
-	irodsPort := cl.cfg.GetString("irods.port")
-	irodsUser := cl.cfg.GetString("irods.user")
-	irodsPass := cl.cfg.GetString("irods.pass")
-	irodsBase := cl.cfg.GetString("irods.base")
-	irodsResc := cl.cfg.GetString("irods.resc")
-	irodsZone := cl.cfg.GetString("irods.zone")
 	c := &irodsconfig{
-		IRODSHost: irodsHost,
-		IRODSPort: irodsPort,
-		IRODSUser: irodsUser,
-		IRODSPass: irodsPass,
-		IRODSBase: irodsBase,
-		IRODSResc: irodsResc,
-		IRODSZone: irodsZone,
+		IRODSHost: cl.cfg.GetString("irods.host"),
+		IRODSPort: cl.cfg.GetString("irods.port"),
+		IRODSUser: cl.cfg.GetString("irods.user"),
+		IRODSPass: cl.cfg.GetString("irods.pass"),
+		IRODSBase: cl.cfg.GetString("irods.base"),
+		IRODSResc: cl.cfg.GetString("irods.resc"),
+		IRODSZone: cl.cfg.GetString("irods.zone"),
 	}
 	var buffer bytes.Buffer
-	err = t.Execute(&buffer, c)
+	err := cl.irodsConfigTemplate.Execute(&buffer, c)
 	if err != nil {
 		return "", err
 	}
@@ -508,7 +517,10 @@ func main() {
 	defer client.Close()
 
 	localfs := &osys{}
-	launcher := New(cfg, client, localfs)
+	launcher, err := New(cfg, client, localfs)
+	if err != nil {
+		logcabin.Error.Fatal(err)
+	}
 
 	launcher.client.SetupPublishing(exchangeName)
 
