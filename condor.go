@@ -175,13 +175,10 @@ func New(c *viper.Viper, client Messenger, fs fsys) (*CondorLauncher, error) {
 
 // GenerateCondorSubmit returns a string (or error) containing the contents
 // of what should go into an HTCondor submission file.
-func (cl *CondorLauncher) GenerateCondorSubmit(submission *model.Job) (string, error) {
+func (cl *CondorLauncher) GenerateCondorSubmit(submission *model.Job) (*bytes.Buffer, error) {
 	var buffer bytes.Buffer
 	err := cl.submissionTemplate.Execute(&buffer, submission)
-	if err != nil {
-		return "", err
-	}
-	return buffer.String(), err
+	return &buffer, err
 }
 
 type scriptable struct {
@@ -192,13 +189,10 @@ type scriptable struct {
 
 // GenerateJobConfig creates a string containing the config that gets passed
 // into the job.
-func (cl *CondorLauncher) GenerateJobConfig() (string, error) {
+func (cl *CondorLauncher) GenerateJobConfig() (*bytes.Buffer, error) {
 	var buffer bytes.Buffer
 	err := cl.jobConfigTemplate.Execute(&buffer, cl.cfg)
-	if err != nil {
-		return "", err
-	}
-	return buffer.String(), nil
+	return &buffer, err
 }
 
 type irodsconfig struct {
@@ -212,7 +206,7 @@ type irodsconfig struct {
 }
 
 // GenerateIRODSConfig returns the contents of the irods-config file as a string.
-func (cl *CondorLauncher) GenerateIRODSConfig() (string, error) {
+func (cl *CondorLauncher) GenerateIRODSConfig() (*bytes.Buffer, error) {
 	c := &irodsconfig{
 		IRODSHost: cl.cfg.GetString("irods.host"),
 		IRODSPort: cl.cfg.GetString("irods.port"),
@@ -224,10 +218,7 @@ func (cl *CondorLauncher) GenerateIRODSConfig() (string, error) {
 	}
 	var buffer bytes.Buffer
 	err := cl.irodsConfigTemplate.Execute(&buffer, c)
-	if err != nil {
-		return "", err
-	}
-	return buffer.String(), err
+	return &buffer, err
 }
 
 // CreateSubmissionDirectory creates a directory for a submission and returns the path to it as a string.
@@ -266,30 +257,24 @@ func (cl *CondorLauncher) CreateSubmissionFiles(dir string, s *model.Job) (strin
 	if err != nil {
 		return "", "", "", err
 	}
-
-	cmdPath := path.Join(dir, "iplant.cmd")
-	configPath := path.Join(dir, "config")
-	jobPath := path.Join(dir, "job")
-	irodsPath := path.Join(dir, "irods-config")
-
-	err = ioutil.WriteFile(cmdPath, []byte(cmdContents), 0644)
-	if err != nil {
-		return "", "", "", nil
+	subfiles := []struct {
+		filename    string
+		filecontent []byte
+		permissions os.FileMode
+	}{
+		{filename: path.Join(dir, "iplant.cmd"), filecontent: cmdContents.Bytes(), permissions: 0644},
+		{filename: path.Join(dir, "config"), filecontent: jobConfigContents.Bytes(), permissions: 0644},
+		{filename: path.Join(dir, "job"), filecontent: jobContents, permissions: 0644},
+		{filename: path.Join(dir, "irods-config"), filecontent: irodsContents.Bytes(), permissions: 0644},
 	}
 
-	err = ioutil.WriteFile(configPath, []byte(jobConfigContents), 0644)
-	if err != nil {
-		return "", "", "", nil
+	for _, sf := range subfiles {
+		err = ioutil.WriteFile(sf.filename, sf.filecontent, sf.permissions)
+		if err != nil {
+			return "", "", "", err
+		}
 	}
-
-	err = ioutil.WriteFile(jobPath, []byte(jobContents), 0644)
-	if err != nil {
-		return "", "", "", nil
-	}
-
-	err = ioutil.WriteFile(irodsPath, []byte(irodsContents), 0644)
-
-	return cmdPath, configPath, jobPath, err
+	return subfiles[0].filename, subfiles[1].filename, subfiles[2].filename, nil
 }
 
 func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
@@ -307,12 +292,10 @@ func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
 
 	cmd := exec.Command(csPath, cmdPath)
 	cmd.Dir = path.Dir(cmdPath)
-	pathEnv := cl.cfg.GetString("condor.path_env_var")
-	condorCfg := cl.cfg.GetString("condor.condor_config")
 
 	cmd.Env = []string{
-		fmt.Sprintf("PATH=%s", pathEnv),
-		fmt.Sprintf("CONDOR_CONFIG=%s", condorCfg),
+		fmt.Sprintf("PATH=%s", cl.cfg.GetString("condor.path_env_var")),
+		fmt.Sprintf("CONDOR_CONFIG=%s", cl.cfg.GetString("condor.condor_config")),
 	}
 
 	output, err := cmd.CombinedOutput()

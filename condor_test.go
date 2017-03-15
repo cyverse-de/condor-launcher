@@ -146,7 +146,7 @@ when_to_transfer_output = ON_EXIT_OR_EVICT
 notification = NEVER
 queue
 `
-	if actual != expected {
+	if actual.String() != expected {
 		t.Errorf("GenerateCondorSubmit() returned:\n\n%s\n\ninstead of:\n\n%s", actual, expected)
 	}
 }
@@ -188,7 +188,7 @@ when_to_transfer_output = ON_EXIT_OR_EVICT
 notification = NEVER
 queue
 `
-	if actual != expected {
+	if actual.String() != expected {
 		t.Errorf("GenerateCondorSubmit() returned:\n\n%s\n\ninstead of:\n\n%s", actual, expected)
 	}
 	_inittests(t, false)
@@ -227,7 +227,7 @@ when_to_transfer_output = ON_EXIT_OR_EVICT
 notification = NEVER
 queue
 `
-	if actual != expected {
+	if actual.String() != expected {
 		t.Errorf("GenerateCondorSubmit() returned:\n\n%s\n\ninstead of:\n\n%s", actual, expected)
 	}
 }
