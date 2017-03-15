@@ -44,6 +44,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/cyverse-de/logcabin",
+			"repository": "https://github.com/cyverse-de/logcabin",
+			"vcs": "git",
+			"revision": "fa67165f94282d904f7f908ca2edaa7e941f7557",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/cyverse-de/messaging",
 			"repository": "https://github.com/cyverse-de/messaging",
 			"vcs": "git",
