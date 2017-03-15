@@ -48,6 +48,7 @@ import (
 	"github.com/cyverse-de/messaging"
 	"github.com/cyverse-de/model"
 	"github.com/cyverse-de/version"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/viper"
@@ -98,7 +99,7 @@ queue
 // JobConfigTemplateText is the text of the template for the HTCondor submission
 // file.
 const JobConfigTemplateText = `amqp:
-uri: {{.GetString "amqp.uri"}}
+	uri: {{.GetString "amqp.uri"}}
 exchange:
 	name: {{.GetString "amqp.exchange.name"}}
 	type: {{.GetString "amqp.exchange.type"}}
@@ -108,7 +109,8 @@ porklock:
 image: "{{.GetString "porklock.image"}}"
 tag: "{{.GetString "porklock.tag"}}"
 condor:
-filter_files: "{{.GetString "condor.filter_files"}}"`
+filter_files: "{{.GetString "condor.filter_files"}}"
+`
 
 // IRODSConfigTemplateText is the text of the template for porklock's iRODS
 // config file.
@@ -168,17 +170,17 @@ func New(c *viper.Viper, client Messenger, fs fsys) (*CondorLauncher, error) {
 	}
 	st, err := template.New("condor_submit").Parse(SubmissionTemplateText)
 	if err != nil {
-		return cl, err
+		return cl, errors.Wrap(err, "failed to parse submission template text")
 	}
 	cl.submissionTemplate = st
 	jct, err := template.New("job_config").Parse(JobConfigTemplateText)
 	if err != nil {
-		return cl, err
+		return cl, errors.Wrap(err, "failed to parse job config template text")
 	}
 	cl.jobConfigTemplate = jct
 	ict, err := template.New("irods_config").Parse(IRODSConfigTemplateText)
 	if err != nil {
-		return cl, err
+		return cl, errors.Wrap(err, "failed to parse irods config template text")
 	}
 	cl.irodsConfigTemplate = ict
 	return cl, err
@@ -189,7 +191,10 @@ func New(c *viper.Viper, client Messenger, fs fsys) (*CondorLauncher, error) {
 func (cl *CondorLauncher) GenerateCondorSubmit(submission *model.Job) (*bytes.Buffer, error) {
 	var buffer bytes.Buffer
 	err := cl.submissionTemplate.Execute(&buffer, submission)
-	return &buffer, err
+	if err != nil {
+		return &buffer, errors.Wrap(err, "failed to apply data to the submission template")
+	}
+	return &buffer, nil
 }
 
 type scriptable struct {
@@ -203,7 +208,10 @@ type scriptable struct {
 func (cl *CondorLauncher) GenerateJobConfig() (*bytes.Buffer, error) {
 	var buffer bytes.Buffer
 	err := cl.jobConfigTemplate.Execute(&buffer, cl.cfg)
-	return &buffer, err
+	if err != nil {
+		return &buffer, errors.Wrap(err, "failed to apply data to the job config template")
+	}
+	return &buffer, nil
 }
 
 type irodsconfig struct {
@@ -229,6 +237,9 @@ func (cl *CondorLauncher) GenerateIRODSConfig() (*bytes.Buffer, error) {
 	}
 	var buffer bytes.Buffer
 	err := cl.irodsConfigTemplate.Execute(&buffer, c)
+	if err != nil {
+		return &buffer, errors.Wrap(err, "failed to apply data to the irods config template")
+	}
 	return &buffer, err
 }
 
@@ -240,7 +251,7 @@ func (cl *CondorLauncher) CreateSubmissionDirectory(s *model.Job) (string, error
 	}
 	err := os.MkdirAll(dirPath, 0755)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "failed to create the directory %s", dirPath)
 	}
 	return dirPath, err
 }
@@ -282,7 +293,7 @@ func (cl *CondorLauncher) CreateSubmissionFiles(dir string, s *model.Job) (strin
 	for _, sf := range subfiles {
 		err = ioutil.WriteFile(sf.filename, sf.filecontent, sf.permissions)
 		if err != nil {
-			return "", "", "", err
+			return "", "", "", errors.Wrapf(err, "failed to write to file %s", sf.filename)
 		}
 	}
 	return subfiles[0].filename, subfiles[1].filename, subfiles[2].filename, nil
@@ -291,13 +302,13 @@ func (cl *CondorLauncher) CreateSubmissionFiles(dir string, s *model.Job) (strin
 func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
 	csPath, err := exec.LookPath("condor_submit")
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "failed to find condor_submit in $PATH")
 	}
 
 	if !path.IsAbs(csPath) {
 		csPath, err = filepath.Abs(csPath)
 		if err != nil {
-			return "", err
+			return "", errors.Wrapf(err, "failed to get the absolute path to %s", csPath)
 		}
 	}
 
@@ -312,7 +323,7 @@ func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
 	output, err := cmd.CombinedOutput()
 	log.Infof("Output of condor_submit:\n%s\n", output)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "failed to execute %s", csPath)
 	}
 
 	log.Infof("Extracted ID: %s\n", string(model.ExtractJobID(output)))
@@ -348,13 +359,13 @@ func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
 	crPath, err := exec.LookPath("condor_rm")
 	log.Infof("condor_rm found at %s", crPath)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to find condor_rm on the $PATH")
 	}
 
 	if !path.IsAbs(crPath) {
 		crPath, err = filepath.Abs(crPath)
 		if err != nil {
-			return "", err
+			return "", errors.Wrapf(err, "failed to get the absolute path for %s", crPath)
 		}
 	}
 
@@ -370,7 +381,7 @@ func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
 	output, err := cmd.CombinedOutput()
 	log.Infof("condor_rm output for job %s:\n%s\n", s.CondorID, output)
 	if err != nil {
-		return "", err
+		return "", errors.Wrapf(err, "failed to execute %s", crPath)
 	}
 
 	return string(output), err
@@ -381,7 +392,7 @@ func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
 func (cl *CondorLauncher) startHeldTicker(client *messaging.Client) (*time.Ticker, error) {
 	d, err := time.ParseDuration("30s")
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to parse duration '30s'")
 	}
 	t := time.NewTicker(d)
 	go func(t *time.Ticker, client *messaging.Client) {
@@ -401,13 +412,13 @@ func (cl *CondorLauncher) handlePing(delivery amqp.Delivery) {
 
 	out, err := json.Marshal(&ping.Pong{})
 	if err != nil {
-		log.Error(err)
+		log.Error(errors.Wrap(err, "failed to marshal pong response"))
 	}
 
 	log.Infoln("Sent pong")
 
 	if err = cl.client.Publish(pongKey, out); err != nil {
-		log.Error(err)
+		log.Error(errors.Wrap(err, "failed to publish pong response"))
 	}
 }
 
@@ -415,7 +426,7 @@ func (cl *CondorLauncher) handlePing(delivery amqp.Delivery) {
 // another function.
 func (cl *CondorLauncher) handleEvents(delivery amqp.Delivery) {
 	if err := delivery.Ack(false); err != nil {
-		log.Error(err)
+		log.Error(errors.Wrap(err, "failed to ack amqp event delivery"))
 	}
 
 	switch delivery.RoutingKey {
