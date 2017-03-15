@@ -104,12 +104,12 @@ exchange:
 	name: {{.GetString "amqp.exchange.name"}}
 	type: {{.GetString "amqp.exchange.type"}}
 irods:
-base: "{{.GetString "irods.base"}}"
+	base: "{{.GetString "irods.base"}}"
 porklock:
-image: "{{.GetString "porklock.image"}}"
-tag: "{{.GetString "porklock.tag"}}"
+	image: "{{.GetString "porklock.image"}}"
+	tag: "{{.GetString "porklock.tag"}}"
 condor:
-filter_files: "{{.GetString "condor.filter_files"}}"
+	filter_files: "{{.GetString "condor.filter_files"}}"
 `
 
 // IRODSConfigTemplateText is the text of the template for porklock's iRODS
