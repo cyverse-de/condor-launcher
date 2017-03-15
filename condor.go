@@ -42,9 +42,9 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/cyverse-de/configurate"
 	"github.com/cyverse-de/go-events/ping"
-	"github.com/cyverse-de/logcabin"
 	"github.com/cyverse-de/messaging"
 	"github.com/cyverse-de/model"
 	"github.com/cyverse-de/version"
@@ -52,6 +52,16 @@ import (
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
 )
+
+var log = logrus.WithFields(logrus.Fields{
+	"service": "condor-launcher",
+	"art-id":  "condor-launcher",
+	"group":   "org.cyverse",
+})
+
+func init() {
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+}
 
 const pingKey = "events.condor-launcher.ping"
 const pongKey = "events.condor-launcher.pong"
@@ -299,12 +309,12 @@ func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
 	}
 
 	output, err := cmd.CombinedOutput()
-	logcabin.Info.Printf("Output of condor_submit:\n%s\n", output)
+	log.Infof("Output of condor_submit:\n%s\n", output)
 	if err != nil {
 		return "", err
 	}
 
-	logcabin.Info.Printf("Extracted ID: %s\n", string(model.ExtractJobID(output)))
+	log.Infof("Extracted ID: %s\n", string(model.ExtractJobID(output)))
 
 	return string(model.ExtractJobID(output)), err
 }
@@ -312,30 +322,30 @@ func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
 func (cl *CondorLauncher) launch(s *model.Job) (string, error) {
 	sdir, err := cl.CreateSubmissionDirectory(s)
 	if err != nil {
-		logcabin.Error.Printf("Error creating submission directory:\n%s\n", err)
+		log.Errorf("Error creating submission directory:\n%s\n", err)
 		return "", err
 	}
 
 	cmd, _, _, err := cl.CreateSubmissionFiles(sdir, s)
 	if err != nil {
-		logcabin.Error.Printf("Error creating submission files:\n%s", err)
+		log.Errorf("Error creating submission files:\n%s", err)
 		return "", err
 	}
 
 	id, err := cl.submit(cmd, s)
 	if err != nil {
-		logcabin.Error.Printf("Error submitting job:\n%s", err)
+		log.Errorf("Error submitting job:\n%s", err)
 		return "", err
 	}
 
-	logcabin.Info.Printf("Condor job id is %s\n", id)
+	log.Infof("Condor job id is %s\n", id)
 
 	return id, err
 }
 
 func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
 	crPath, err := exec.LookPath("condor_rm")
-	logcabin.Info.Printf("condor_rm found at %s", crPath)
+	log.Infof("condor_rm found at %s", crPath)
 	if err != nil {
 		return "", err
 	}
@@ -357,7 +367,7 @@ func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
 	}
 
 	output, err := cmd.CombinedOutput()
-	logcabin.Info.Printf("condor_rm output for job %s:\n%s\n", s.CondorID, string(output))
+	log.Infof("condor_rm output for job %s:\n%s\n", s.CondorID, output)
 	if err != nil {
 		return "", err
 	}
@@ -386,17 +396,17 @@ func (cl *CondorLauncher) startHeldTicker(client *messaging.Client) (*time.Ticke
 
 // handlePing is the handler for ping events.
 func (cl *CondorLauncher) handlePing(delivery amqp.Delivery) {
-	logcabin.Info.Println("Received ping")
+	log.Infoln("Received ping")
 
 	out, err := json.Marshal(&ping.Pong{})
 	if err != nil {
-		logcabin.Error.Print(err)
+		log.Error(err)
 	}
 
-	logcabin.Info.Println("Sent pong")
+	log.Infoln("Sent pong")
 
 	if err = cl.client.Publish(pongKey, out); err != nil {
-		logcabin.Error.Print(err)
+		log.Error(err)
 	}
 }
 
@@ -404,14 +414,14 @@ func (cl *CondorLauncher) handlePing(delivery amqp.Delivery) {
 // another function.
 func (cl *CondorLauncher) handleEvents(delivery amqp.Delivery) {
 	if err := delivery.Ack(false); err != nil {
-		logcabin.Error.Print(err)
+		log.Error(err)
 	}
 
 	switch delivery.RoutingKey {
 	case pingKey:
 		cl.handlePing(delivery)
 	default:
-		logcabin.Error.Printf("unhandled event with routing key of %s", delivery.RoutingKey)
+		log.Errorf("unhandled event with routing key of %s", delivery.RoutingKey)
 	}
 }
 
@@ -420,14 +430,14 @@ func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
 	body := delivery.Body
 
 	if err := delivery.Ack(false); err != nil {
-		logcabin.Error.Print(err)
+		log.Error(err)
 	}
 
 	req := messaging.JobRequest{}
 	err := json.Unmarshal(body, &req)
 	if err != nil {
-		logcabin.Error.Print(err)
-		logcabin.Error.Print(string(body[:]))
+		log.Error(err)
+		log.Error(string(body[:]))
 		return
 	}
 
@@ -439,24 +449,24 @@ func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
 	case messaging.Launch:
 		jobID, err := cl.launch(req.Job)
 		if err != nil {
-			logcabin.Error.Print(err)
+			log.Error(err)
 			err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
 				Job:     req.Job,
 				State:   messaging.FailedState,
 				Message: fmt.Sprintf("condor-launcher failed to launch job:\n %s", err),
 			})
 			if err != nil {
-				logcabin.Error.Print(err)
+				log.Error(err)
 			}
 		} else {
-			logcabin.Info.Printf("Launched Condor ID %s", jobID)
+			log.Infof("Launched Condor ID %s", jobID)
 			err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
 				Job:     req.Job,
 				State:   messaging.SubmittedState,
 				Message: fmt.Sprintf("Launched Condor ID %s", jobID),
 			})
 			if err != nil {
-				logcabin.Error.Print(err)
+				log.Error(err)
 			}
 		}
 	}
@@ -469,8 +479,6 @@ func main() {
 	)
 
 	flag.Parse()
-
-	logcabin.Init("condor-launcher", "condor-launcher")
 
 	if *showVersion {
 		version.AppVersion()
@@ -485,9 +493,9 @@ func main() {
 
 	cfg, err := configurate.InitDefaults(*cfgPath, configurate.JobServicesDefaults)
 	if err != nil {
-		logcabin.Error.Fatal(err)
+		log.Fatal(err)
 	}
-	logcabin.Info.Println("Done reading config.")
+	log.Infoln("Done reading config.")
 
 	uri := cfg.GetString("amqp.uri")
 	exchangeName := cfg.GetString("amqp.exchange.name")
@@ -495,14 +503,14 @@ func main() {
 
 	client, err := messaging.NewClient(uri, true)
 	if err != nil {
-		logcabin.Error.Fatal(err)
+		log.Fatal(err)
 	}
 	defer client.Close()
 
 	localfs := &osys{}
 	launcher, err := New(cfg, client, localfs)
 	if err != nil {
-		logcabin.Error.Fatal(err)
+		log.Fatal(err)
 	}
 
 	launcher.client.SetupPublishing(exchangeName)
@@ -511,9 +519,9 @@ func main() {
 
 	ticker, err := launcher.startHeldTicker(client)
 	if err != nil {
-		logcabin.Error.Fatal(err)
+		log.Fatal(err)
 	}
-	logcabin.Info.Printf("Started up the held state ticker: %#v", ticker)
+	log.Infof("Started up the held state ticker: %#v", ticker)
 
 	launcher.RegisterStopHandler(client)
 

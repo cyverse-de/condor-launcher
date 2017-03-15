@@ -2,6 +2,14 @@
 	"version": 0,
 	"dependencies": [
 		{
+			"importpath": "github.com/Sirupsen/logrus",
+			"repository": "https://github.com/Sirupsen/logrus",
+			"vcs": "git",
+			"revision": "547e984ad93a90192134fc0fdb57a468edb514fe",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/armon/consul-api",
 			"repository": "https://github.com/armon/consul-api",
 			"vcs": "git",
@@ -33,14 +41,6 @@
 			"revision": "85bdb8d67e312eb3a7a8d0bf1749509d0fd062ea",
 			"branch": "master",
 			"path": "/ping",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/cyverse-de/logcabin",
-			"repository": "https://github.com/cyverse-de/logcabin",
-			"vcs": "git",
-			"revision": "7a3aa512933277796b9f0fd55cdd0b67d05bfc3c",
-			"branch": "master",
 			"notests": true
 		},
 		{
@@ -126,6 +126,22 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/onsi/ginkgo",
+			"repository": "https://github.com/onsi/ginkgo",
+			"vcs": "git",
+			"revision": "5ca121185e255e5041d7727d77992618545a93d2",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/onsi/gomega",
+			"repository": "https://github.com/onsi/gomega",
+			"vcs": "git",
+			"revision": "1de7ab2df9105aa5c15c4d7e14a8a514e3cb8d4b",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/pelletier/go-buffruneio",
 			"repository": "https://github.com/pelletier/go-buffruneio",
 			"vcs": "git",
@@ -154,6 +170,14 @@
 			"repository": "https://github.com/pkg/sftp",
 			"vcs": "git",
 			"revision": "a71e8f580e3b622ebff585309160b1cc549ef4d2",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/sirupsen/logrus",
+			"repository": "https://github.com/sirupsen/logrus",
+			"vcs": "git",
+			"revision": "547e984ad93a90192134fc0fdb57a468edb514fe",
 			"branch": "master",
 			"notests": true
 		},
@@ -203,6 +227,33 @@
 			"vcs": "git",
 			"revision": "2e25825abdbd7752ff08b270d313b93519a0a232",
 			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/stretchr/testify/assert",
+			"repository": "https://github.com/stretchr/testify",
+			"vcs": "git",
+			"revision": "4d4bfba8f1d1027c4fdbe371823030df51419987",
+			"branch": "master",
+			"path": "/assert",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
+			"repository": "https://github.com/stretchr/testify",
+			"vcs": "git",
+			"revision": "4d4bfba8f1d1027c4fdbe371823030df51419987",
+			"branch": "master",
+			"path": "vendor/github.com/davecgh/go-spew/spew",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/stretchr/testify/vendor/github.com/pmezard/go-difflib/difflib",
+			"repository": "https://github.com/stretchr/testify",
+			"vcs": "git",
+			"revision": "4d4bfba8f1d1027c4fdbe371823030df51419987",
+			"branch": "master",
+			"path": "vendor/github.com/pmezard/go-difflib/difflib",
 			"notests": true
 		},
 		{
@@ -350,11 +401,27 @@
 			"notests": true
 		},
 		{
+			"importpath": "gopkg.in/airbrake/gobrake.v2",
+			"repository": "https://gopkg.in/airbrake/gobrake.v2",
+			"vcs": "git",
+			"revision": "668876711219e8b0206e2994bf0a59d889c775aa",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "gopkg.in/check.v1",
 			"repository": "https://gopkg.in/check.v1",
 			"vcs": "git",
 			"revision": "4f90aeace3a26ad7021961c297b22c42160c7b25",
 			"branch": "v1",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/gemnasium/logrus-airbrake-hook.v2",
+			"repository": "https://gopkg.in/gemnasium/logrus-airbrake-hook.v2",
+			"vcs": "git",
+			"revision": "bfee1239d796830ca346767650cce5ba90d58c57",
+			"branch": "master",
 			"notests": true
 		},
 		{
