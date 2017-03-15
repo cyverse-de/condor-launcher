@@ -47,6 +47,7 @@ import (
 	"github.com/cyverse-de/messaging"
 	"github.com/cyverse-de/model"
 	"github.com/cyverse-de/version"
+	"github.com/johnworth/logcabin"
 	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/viper"
@@ -479,6 +480,8 @@ func main() {
 	)
 
 	flag.Parse()
+
+	logcabin.Init("condor-launcher", "condor-launcher")
 
 	if *showVersion {
 		version.AppVersion()
