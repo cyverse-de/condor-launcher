@@ -49,17 +49,14 @@ func CreateSubmissionFiles(dir string, cfg *viper.Viper, s *model.Job) (string, 
 	if err != nil {
 		return "", "", "", err
 	}
-
 	jobConfigContents, err := GenerateJobConfig(JobConfigTemplate, cfg)
 	if err != nil {
 		return "", "", "", err
 	}
-
 	jobContents, err := json.Marshal(s)
 	if err != nil {
 		return "", "", "", err
 	}
-
 	irodsContents, err := GenerateIRODSConfig(IRODSConfigTemplate, cfg)
 	if err != nil {
 		return "", "", "", err
@@ -74,7 +71,6 @@ func CreateSubmissionFiles(dir string, cfg *viper.Viper, s *model.Job) (string, 
 		{filename: path.Join(dir, "job"), filecontent: jobContents, permissions: 0644},
 		{filename: path.Join(dir, "irods-config"), filecontent: irodsContents.Bytes(), permissions: 0644},
 	}
-
 	for _, sf := range subfiles {
 		err = ioutil.WriteFile(sf.filename, sf.filecontent, sf.permissions)
 		if err != nil {

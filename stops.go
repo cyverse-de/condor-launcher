@@ -22,35 +22,27 @@ func ExecCondorQ(cfg *viper.Viper) ([]byte, error) {
 		output []byte
 		err    error
 	)
-
 	csPath, err := exec.LookPath("condor_q")
 	if err != nil {
 		return output, errors.Wrap(err, "failed to find condor_q on the $PATH")
 	}
-
 	if !path.IsAbs(csPath) {
 		csPath, err = filepath.Abs(csPath)
 		if err != nil {
 			return output, errors.Wrapf(err, "failed to get the absolute path of %s", csPath)
 		}
 	}
-
 	cmd := exec.Command(csPath, "-long")
-
 	pathEnv := cfg.GetString("condor.path_env_var")
-
 	condorCfg := cfg.GetString("condor.condor_config")
-
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", pathEnv),
 		fmt.Sprintf("CONDOR_CONFIG=%s", condorCfg),
 	}
-
 	output, err = cmd.CombinedOutput()
 	if err != nil {
 		return output, errors.Wrapf(err, "failed to get the output of the command '%s %s'", csPath, "-long")
 	}
-
 	return output, nil
 }
 
@@ -61,36 +53,29 @@ func ExecCondorRm(condorID string, cfg *viper.Viper) ([]byte, error) {
 		output []byte
 		err    error
 	)
-
 	crPath, err := exec.LookPath("condor_rm")
 	log.Infof("condor_rm found at %s", crPath)
 	if err != nil {
 		return output, errors.Wrap(err, "failed to find condor_rm on the $PATH")
 	}
-
 	if !path.IsAbs(crPath) {
 		crPath, err = filepath.Abs(crPath)
 		if err != nil {
 			return output, errors.Wrapf(err, "failed to get the absolute path of %s", crPath)
 		}
 	}
-
 	pathEnv := cfg.GetString("condor.path_env_var")
-
 	condorConfig := cfg.GetString("condor.condor_config")
-
 	cmd := exec.Command(crPath, condorID)
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", pathEnv),
 		fmt.Sprintf("CONDOR_CONFIG=%s", condorConfig),
 	}
-
 	output, err = cmd.CombinedOutput()
 	log.Infof("condor_rm output for job %s:\n%s\n", condorID, output)
 	if err != nil {
 		return output, errors.Wrapf(err, "failed to get the output of '%s %s'", crPath, condorID)
 	}
-
 	return output, nil
 }
 
@@ -177,13 +162,11 @@ func (cl *CondorLauncher) killHeldJobs(client *messaging.Client) {
 		cmdOutput   []byte
 		heldEntries []queueEntry
 	)
-
 	log.Infoln("Looking for jobs in the held state...")
 	if cmdOutput, err = ExecCondorQ(cl.cfg); err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "error running condor_q"))
 		return
 	}
-
 	heldEntries = heldQueueEntries(cmdOutput)
 	log.Infof("There are %d jobs in the held state", len(heldEntries))
 	for _, entry := range heldEntries {
@@ -208,26 +191,20 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 			invID          string
 			err            error
 		)
-
 		d.Ack(false)
-
 		log.Infoln("in stopHandler")
-
 		stopRequest := &messaging.StopRequest{}
 		if err = json.Unmarshal(d.Body, stopRequest); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal the stop request body"))
 			return
 		}
-
 		invID = stopRequest.InvocationID
-
 		log.Infoln("Running condor_q...")
 		if condorQOutput, err = ExecCondorQ(cl.cfg); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to exec condor_q"))
 			return
 		}
 		log.Infoln("Done running condor_q")
-
 		entries := queueEntriesByInvocationID(condorQOutput, invID)
 		log.Infof("Number of entries for job %s is %d", invID, len(entries))
 		for _, entry := range entries {

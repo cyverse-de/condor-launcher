@@ -66,12 +66,10 @@ func init() {
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse submission template text"))
 	}
-
 	JobConfigTemplate, err = template.New("job_config").Parse(JobConfigTemplateText)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse job config template text"))
 	}
-
 	IRODSConfigTemplate, err = template.New("irods_config").Parse(IRODSConfigTemplateText)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse irods config template text"))
@@ -113,30 +111,24 @@ func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to find condor_submit in $PATH")
 	}
-
 	if !path.IsAbs(csPath) {
 		csPath, err = filepath.Abs(csPath)
 		if err != nil {
 			return "", errors.Wrapf(err, "failed to get the absolute path to %s", csPath)
 		}
 	}
-
 	cmd := exec.Command(csPath, cmdPath)
 	cmd.Dir = path.Dir(cmdPath)
-
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", cl.cfg.GetString("condor.path_env_var")),
 		fmt.Sprintf("CONDOR_CONFIG=%s", cl.cfg.GetString("condor.condor_config")),
 	}
-
 	output, err := cmd.CombinedOutput()
 	log.Infof("Output of condor_submit:\n%s\n", output)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to execute %s", csPath)
 	}
-
 	log.Infof("Extracted ID: %s\n", string(model.ExtractJobID(output)))
-
 	return string(model.ExtractJobID(output)), err
 }
 
@@ -146,21 +138,17 @@ func (cl *CondorLauncher) launch(s *model.Job) (string, error) {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to create submission directory"))
 		return "", err
 	}
-
 	cmd, _, _, err := CreateSubmissionFiles(sdir, cl.cfg, s)
 	if err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to create submission files"))
 		return "", err
 	}
-
 	id, err := cl.submit(cmd, s)
 	if err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to submit job"))
 		return "", err
 	}
-
 	log.Infof("Condor job id is %s\n", id)
-
 	return id, err
 }
 
@@ -170,29 +158,24 @@ func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to find condor_rm on the $PATH")
 	}
-
 	if !path.IsAbs(crPath) {
 		crPath, err = filepath.Abs(crPath)
 		if err != nil {
 			return "", errors.Wrapf(err, "failed to get the absolute path for %s", crPath)
 		}
 	}
-
 	pathEnv := cl.cfg.GetString("condor.path_env_var")
 	condorConfig := cl.cfg.GetString("condor.condor_config")
-
 	cmd := exec.Command(crPath, s.CondorID)
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", pathEnv),
 		fmt.Sprintf("CONDOR_CONFIG=%s", condorConfig),
 	}
-
 	output, err := cmd.CombinedOutput()
 	log.Infof("condor_rm output for job %s:\n%s\n", s.CondorID, output)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to execute %s", crPath)
 	}
-
 	return string(output), err
 }
 
@@ -218,14 +201,11 @@ func (cl *CondorLauncher) startHeldTicker(client *messaging.Client) (*time.Ticke
 // handlePing is the handler for ping events.
 func (cl *CondorLauncher) handlePing(delivery amqp.Delivery) {
 	log.Infoln("Received ping")
-
 	out, err := json.Marshal(&ping.Pong{})
 	if err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to marshal pong response"))
 	}
-
 	log.Infoln("Sent pong")
-
 	if err = cl.client.Publish(pongKey, out); err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to publish pong response"))
 	}
@@ -237,7 +217,6 @@ func (cl *CondorLauncher) handleEvents(delivery amqp.Delivery) {
 	if err := delivery.Ack(false); err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to ack amqp event delivery"))
 	}
-
 	switch delivery.RoutingKey {
 	case pingKey:
 		cl.handlePing(delivery)
@@ -249,11 +228,9 @@ func (cl *CondorLauncher) handleEvents(delivery amqp.Delivery) {
 // handleLaunchRequests triggers Condor jobs in response to launch request messages.
 func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
 	body := delivery.Body
-
 	if err := delivery.Ack(false); err != nil {
 		log.Error(errors.Wrap(err, "failed to ack amqp launch request delivery"))
 	}
-
 	req := messaging.JobRequest{}
 	err := json.Unmarshal(body, &req)
 	if err != nil {
@@ -261,11 +238,9 @@ func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
 		log.Error(string(body[:]))
 		return
 	}
-
 	if req.Job.RequestDisk == "" {
 		req.Job.RequestDisk = "0"
 	}
-
 	switch req.Command {
 	case messaging.Launch:
 		jobID, err := cl.launch(req.Job)
@@ -299,53 +274,40 @@ func main() {
 		showVersion = flag.Bool("version", false, "Print the version information")
 		err         error
 	)
-
 	flag.Parse()
-
 	logcabin.Init("condor-launcher", "condor-launcher")
-
 	if *showVersion {
 		version.AppVersion()
 		os.Exit(0)
 	}
-
 	if *cfgPath == "" {
 		fmt.Println("Error: --config must be set.")
 		flag.PrintDefaults()
 		os.Exit(-1)
 	}
-
 	cfg, err := configurate.InitDefaults(*cfgPath, configurate.JobServicesDefaults)
 	if err != nil {
 		log.Fatalf("%+v\n", errors.Wrap(err, "failed to initialize configuration defaults"))
 	}
 	log.Infoln("Done reading config.")
-
 	uri := cfg.GetString("amqp.uri")
 	exchangeName := cfg.GetString("amqp.exchange.name")
 	exchangeType := cfg.GetString("amqp.exchange.type")
-
 	client, err := messaging.NewClient(uri, true)
 	if err != nil {
 		log.Fatalf("%+v\n", errors.Wrap(err, "failed to create new AMQP client"))
 	}
 	defer client.Close()
-
 	localfs := &osys{}
 	launcher := New(cfg, client, localfs)
-
 	launcher.client.SetupPublishing(exchangeName)
-
 	go launcher.client.Listen()
-
 	ticker, err := launcher.startHeldTicker(client)
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
 	log.Infof("Started up the held state ticker: %#v", ticker)
-
 	launcher.RegisterStopHandler(client)
-
 	launcher.client.AddConsumer(
 		exchangeName,
 		exchangeType,
@@ -353,7 +315,6 @@ func main() {
 		"events.condor-launcher.*",
 		launcher.handleEvents,
 	)
-
 	// Accept and handle messages sent out with the jobs.launches routing key.
 	launcher.client.AddConsumer(
 		exchangeName,
@@ -362,7 +323,6 @@ func main() {
 		messaging.LaunchesKey,
 		launcher.handleLaunchRequests,
 	)
-
 	spin := make(chan int)
 	<-spin
 }
