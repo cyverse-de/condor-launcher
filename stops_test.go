@@ -462,7 +462,7 @@ func TestExecCondorQ(t *testing.T) {
 	inittests(t)
 	filesystem := newtsys()
 	cl := New(cfg, nil, filesystem)
-	output, err := cl.ExecCondorQ()
+	output, err := ExecCondorQ(cl.cfg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -510,7 +510,7 @@ func TestExecCondorRm(t *testing.T) {
 	inittests(t)
 	filesystem := newtsys()
 	cl := New(cfg, nil, filesystem)
-	actual, err := cl.ExecCondorRm("foo")
+	actual, err := ExecCondorRm("foo", cl.cfg)
 	if err != nil {
 		t.Error(err)
 	}

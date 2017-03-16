@@ -11,12 +11,13 @@ import (
 	"github.com/cyverse-de/messaging"
 	"github.com/cyverse-de/model"
 	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 
 	"github.com/streadway/amqp"
 )
 
 // ExecCondorQ runs the condor_q -long command and returns its output.
-func (cl *CondorLauncher) ExecCondorQ() ([]byte, error) {
+func ExecCondorQ(cfg *viper.Viper) ([]byte, error) {
 	var (
 		output []byte
 		err    error
@@ -36,9 +37,9 @@ func (cl *CondorLauncher) ExecCondorQ() ([]byte, error) {
 
 	cmd := exec.Command(csPath, "-long")
 
-	pathEnv := cl.cfg.GetString("condor.path_env_var")
+	pathEnv := cfg.GetString("condor.path_env_var")
 
-	condorCfg := cl.cfg.GetString("condor.condor_config")
+	condorCfg := cfg.GetString("condor.condor_config")
 
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", pathEnv),
@@ -55,7 +56,7 @@ func (cl *CondorLauncher) ExecCondorQ() ([]byte, error) {
 
 // ExecCondorRm runs condor_rm, passing it the condor ID. Returns the output
 // of the command and passibly an error.
-func (cl *CondorLauncher) ExecCondorRm(condorID string) ([]byte, error) {
+func ExecCondorRm(condorID string, cfg *viper.Viper) ([]byte, error) {
 	var (
 		output []byte
 		err    error
@@ -74,9 +75,9 @@ func (cl *CondorLauncher) ExecCondorRm(condorID string) ([]byte, error) {
 		}
 	}
 
-	pathEnv := cl.cfg.GetString("condor.path_env_var")
+	pathEnv := cfg.GetString("condor.path_env_var")
 
-	condorConfig := cl.cfg.GetString("condor.condor_config")
+	condorConfig := cfg.GetString("condor.condor_config")
 
 	cmd := exec.Command(crPath, condorID)
 	cmd.Env = []string{
@@ -178,7 +179,7 @@ func (cl *CondorLauncher) killHeldJobs(client *messaging.Client) {
 	)
 
 	log.Infoln("Looking for jobs in the held state...")
-	if cmdOutput, err = cl.ExecCondorQ(); err != nil {
+	if cmdOutput, err = ExecCondorQ(cl.cfg); err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "error running condor_q"))
 		return
 	}
@@ -221,7 +222,7 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 		invID = stopRequest.InvocationID
 
 		log.Infoln("Running condor_q...")
-		if condorQOutput, err = cl.ExecCondorQ(); err != nil {
+		if condorQOutput, err = ExecCondorQ(cl.cfg); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to exec condor_q"))
 			return
 		}
@@ -235,7 +236,7 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 			}
 			condorID := entry.CondorID
 			log.Infof("Running 'condor_rm %s'", condorID)
-			if condorRMOutput, err = cl.ExecCondorRm(condorID); err != nil {
+			if condorRMOutput, err = ExecCondorRm(condorID, cl.cfg); err != nil {
 				log.Errorf("%+v\n", errors.Wrapf(err, "failed to run 'condor_rm %s'", condorID))
 				continue
 			}
