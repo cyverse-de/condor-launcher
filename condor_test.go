@@ -247,7 +247,7 @@ func TestCreateSubmissionFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd, sh, c, err := cl.CreateSubmissionFiles(dir, s)
+	cmd, sh, c, err := CreateSubmissionFiles(dir, cl.cfg, s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -290,7 +290,7 @@ func TestCondorSubmit(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	cmd, _, _, err := cl.CreateSubmissionFiles(dir, s)
+	cmd, _, _, err := CreateSubmissionFiles(dir, cl.cfg, s)
 	if err != nil {
 		t.Error(err)
 	}

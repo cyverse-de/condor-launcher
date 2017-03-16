@@ -33,7 +33,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -109,49 +108,6 @@ func New(c *viper.Viper, client Messenger, fs fsys) *CondorLauncher {
 	}
 }
 
-// CreateSubmissionFiles creates the iplant.cmd file inside the
-// directory designated by 'dir'. The return values are the path to the iplant.cmd
-// file, and any errors, in that order.
-func (cl *CondorLauncher) CreateSubmissionFiles(dir string, s *model.Job) (string, string, string, error) {
-	cmdContents, err := GenerateCondorSubmit(SubmissionTemplate, s)
-	if err != nil {
-		return "", "", "", err
-	}
-
-	jobConfigContents, err := GenerateJobConfig(JobConfigTemplate, cl.cfg)
-	if err != nil {
-		return "", "", "", err
-	}
-
-	jobContents, err := json.Marshal(s)
-	if err != nil {
-		return "", "", "", err
-	}
-
-	irodsContents, err := GenerateIRODSConfig(IRODSConfigTemplate, cl.cfg)
-	if err != nil {
-		return "", "", "", err
-	}
-	subfiles := []struct {
-		filename    string
-		filecontent []byte
-		permissions os.FileMode
-	}{
-		{filename: path.Join(dir, "iplant.cmd"), filecontent: cmdContents.Bytes(), permissions: 0644},
-		{filename: path.Join(dir, "config"), filecontent: jobConfigContents.Bytes(), permissions: 0644},
-		{filename: path.Join(dir, "job"), filecontent: jobContents, permissions: 0644},
-		{filename: path.Join(dir, "irods-config"), filecontent: irodsContents.Bytes(), permissions: 0644},
-	}
-
-	for _, sf := range subfiles {
-		err = ioutil.WriteFile(sf.filename, sf.filecontent, sf.permissions)
-		if err != nil {
-			return "", "", "", errors.Wrapf(err, "failed to write to file %s", sf.filename)
-		}
-	}
-	return subfiles[0].filename, subfiles[1].filename, subfiles[2].filename, nil
-}
-
 func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
 	csPath, err := exec.LookPath("condor_submit")
 	if err != nil {
@@ -191,7 +147,7 @@ func (cl *CondorLauncher) launch(s *model.Job) (string, error) {
 		return "", err
 	}
 
-	cmd, _, _, err := cl.CreateSubmissionFiles(sdir, s)
+	cmd, _, _, err := CreateSubmissionFiles(sdir, cl.cfg, s)
 	if err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to create submission files"))
 		return "", err
