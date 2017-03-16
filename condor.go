@@ -333,19 +333,19 @@ func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
 func (cl *CondorLauncher) launch(s *model.Job) (string, error) {
 	sdir, err := cl.CreateSubmissionDirectory(s)
 	if err != nil {
-		log.Errorf("Error creating submission directory:\n%s\n", err)
+		log.Errorf("%+v\n", errors.Wrap(err, "failed to create submission directory"))
 		return "", err
 	}
 
 	cmd, _, _, err := cl.CreateSubmissionFiles(sdir, s)
 	if err != nil {
-		log.Errorf("Error creating submission files:\n%s", err)
+		log.Errorf("%+v\n", errors.Wrap(err, "failed to create submission files"))
 		return "", err
 	}
 
 	id, err := cl.submit(cmd, s)
 	if err != nil {
-		log.Errorf("Error submitting job:\n%s", err)
+		log.Errorf("%+v\n", errors.Wrap(err, "failed to submit job"))
 		return "", err
 	}
 
@@ -411,13 +411,13 @@ func (cl *CondorLauncher) handlePing(delivery amqp.Delivery) {
 
 	out, err := json.Marshal(&ping.Pong{})
 	if err != nil {
-		log.Error(errors.Wrap(err, "failed to marshal pong response"))
+		log.Errorf("%+v\n", errors.Wrap(err, "failed to marshal pong response"))
 	}
 
 	log.Infoln("Sent pong")
 
 	if err = cl.client.Publish(pongKey, out); err != nil {
-		log.Error(errors.Wrap(err, "failed to publish pong response"))
+		log.Errorf("%+v\n", errors.Wrap(err, "failed to publish pong response"))
 	}
 }
 
@@ -425,14 +425,14 @@ func (cl *CondorLauncher) handlePing(delivery amqp.Delivery) {
 // another function.
 func (cl *CondorLauncher) handleEvents(delivery amqp.Delivery) {
 	if err := delivery.Ack(false); err != nil {
-		log.Error(errors.Wrap(err, "failed to ack amqp event delivery"))
+		log.Errorf("%+v\n", errors.Wrap(err, "failed to ack amqp event delivery"))
 	}
 
 	switch delivery.RoutingKey {
 	case pingKey:
 		cl.handlePing(delivery)
 	default:
-		log.Errorf("unhandled event with routing key of %s", delivery.RoutingKey)
+		log.Errorf("%+v\n", fmt.Errorf("unhandled event with routing key of %s", delivery.RoutingKey))
 	}
 }
 
@@ -441,13 +441,13 @@ func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
 	body := delivery.Body
 
 	if err := delivery.Ack(false); err != nil {
-		log.Error(err)
+		log.Error(errors.Wrap(err, "failed to ack amqp launch request delivery"))
 	}
 
 	req := messaging.JobRequest{}
 	err := json.Unmarshal(body, &req)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal launch request json"))
 		log.Error(string(body[:]))
 		return
 	}
@@ -460,14 +460,14 @@ func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
 	case messaging.Launch:
 		jobID, err := cl.launch(req.Job)
 		if err != nil {
-			log.Error(err)
+			log.Errorf("%+v\n", err)
 			err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
 				Job:     req.Job,
 				State:   messaging.FailedState,
 				Message: fmt.Sprintf("condor-launcher failed to launch job:\n %s", err),
 			})
 			if err != nil {
-				log.Error(err)
+				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish launch failure job update"))
 			}
 		} else {
 			log.Infof("Launched Condor ID %s", jobID)
@@ -477,7 +477,7 @@ func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
 				Message: fmt.Sprintf("Launched Condor ID %s", jobID),
 			})
 			if err != nil {
-				log.Error(err)
+				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish successful launch job update"))
 			}
 		}
 	}
@@ -506,7 +506,7 @@ func main() {
 
 	cfg, err := configurate.InitDefaults(*cfgPath, configurate.JobServicesDefaults)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v\n", errors.Wrap(err, "failed to initialize configuration defaults"))
 	}
 	log.Infoln("Done reading config.")
 
@@ -516,14 +516,14 @@ func main() {
 
 	client, err := messaging.NewClient(uri, true)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v\n", errors.Wrap(err, "failed to create new AMQP client"))
 	}
 	defer client.Close()
 
 	localfs := &osys{}
 	launcher, err := New(cfg, client, localfs)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v\n", err)
 	}
 
 	launcher.client.SetupPublishing(exchangeName)
@@ -532,7 +532,7 @@ func main() {
 
 	ticker, err := launcher.startHeldTicker(client)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("%+v\n", err)
 	}
 	log.Infof("Started up the held state ticker: %#v", ticker)
 

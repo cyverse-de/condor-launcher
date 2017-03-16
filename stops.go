@@ -10,6 +10,7 @@ import (
 
 	"github.com/cyverse-de/messaging"
 	"github.com/cyverse-de/model"
+	"github.com/pkg/errors"
 
 	"github.com/streadway/amqp"
 )
@@ -23,13 +24,13 @@ func (cl *CondorLauncher) ExecCondorQ() ([]byte, error) {
 
 	csPath, err := exec.LookPath("condor_q")
 	if err != nil {
-		return output, err
+		return output, errors.Wrap(err, "failed to find condor_q on the $PATH")
 	}
 
 	if !path.IsAbs(csPath) {
 		csPath, err = filepath.Abs(csPath)
 		if err != nil {
-			return output, err
+			return output, errors.Wrapf(err, "failed to get the absolute path of %s", csPath)
 		}
 	}
 
@@ -46,7 +47,7 @@ func (cl *CondorLauncher) ExecCondorQ() ([]byte, error) {
 
 	output, err = cmd.CombinedOutput()
 	if err != nil {
-		return output, err
+		return output, errors.Wrapf(err, "failed to get the output of the command '%s %s'", csPath, "-long")
 	}
 
 	return output, nil
@@ -63,13 +64,13 @@ func (cl *CondorLauncher) ExecCondorRm(condorID string) ([]byte, error) {
 	crPath, err := exec.LookPath("condor_rm")
 	log.Infof("condor_rm found at %s", crPath)
 	if err != nil {
-		return output, err
+		return output, errors.Wrap(err, "failed to find condor_rm on the $PATH")
 	}
 
 	if !path.IsAbs(crPath) {
 		crPath, err = filepath.Abs(crPath)
 		if err != nil {
-			return output, err
+			return output, errors.Wrapf(err, "failed to get the absolute path of %s", crPath)
 		}
 	}
 
@@ -86,7 +87,7 @@ func (cl *CondorLauncher) ExecCondorRm(condorID string) ([]byte, error) {
 	output, err = cmd.CombinedOutput()
 	log.Infof("condor_rm output for job %s:\n%s\n", condorID, output)
 	if err != nil {
-		return output, err
+		return output, errors.Wrapf(err, "failed to get the output of '%s %s'", crPath, condorID)
 	}
 
 	return output, nil
@@ -178,7 +179,7 @@ func (cl *CondorLauncher) killHeldJobs(client *messaging.Client) {
 
 	log.Infoln("Looking for jobs in the held state...")
 	if cmdOutput, err = cl.ExecCondorQ(); err != nil {
-		log.Errorf("Error running condor_q: %s", err)
+		log.Errorf("%+v\n", errors.Wrap(err, "error running condor_q"))
 		return
 	}
 
@@ -192,7 +193,7 @@ func (cl *CondorLauncher) killHeldJobs(client *messaging.Client) {
 				"admin",
 				"Job was in held state",
 			); err != nil {
-				log.Errorf("Error sending stop request: %s", err)
+				log.Errorf("%+v\n", errors.Wrap(err, "error sending stop request"))
 			}
 		}
 	}
@@ -213,7 +214,7 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 
 		stopRequest := &messaging.StopRequest{}
 		if err = json.Unmarshal(d.Body, stopRequest); err != nil {
-			log.Errorf("Error unmarshalling message body:\n%s", err)
+			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal the stop request body"))
 			return
 		}
 
@@ -221,7 +222,7 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 
 		log.Infoln("Running condor_q...")
 		if condorQOutput, err = cl.ExecCondorQ(); err != nil {
-			log.Errorf("Error running condor_q:\n%s", err)
+			log.Errorf("%+v\n", errors.Wrap(err, "failed to exec condor_q"))
 			return
 		}
 		log.Infoln("Done running condor_q")
@@ -235,7 +236,7 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 			condorID := entry.CondorID
 			log.Infof("Running 'condor_rm %s'", condorID)
 			if condorRMOutput, err = cl.ExecCondorRm(condorID); err != nil {
-				log.Errorf("Error running 'condor_rm %s':\n%s", condorID, err)
+				log.Errorf("%+v\n", errors.Wrapf(err, "failed to run 'condor_rm %s'", condorID))
 				continue
 			}
 			fauxJob := model.New(cl.cfg)
@@ -246,7 +247,7 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 				Message: "Job was killed",
 			}
 			if err = client.PublishJobUpdate(update); err != nil {
-				log.Errorf("Error publishing update for failed job:\n%s", err)
+				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a failed job"))
 			}
 			log.Infof("Output of 'condor_rm %s':\n%s", condorID, condorRMOutput)
 		}
