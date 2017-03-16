@@ -100,9 +100,9 @@ queue
 // file.
 const JobConfigTemplateText = `amqp:
     uri: {{.GetString "amqp.uri"}}
-exchange:
-    name: {{.GetString "amqp.exchange.name"}}
-    type: {{.GetString "amqp.exchange.type"}}
+    exchange:
+        name: {{.GetString "amqp.exchange.name"}}
+        type: {{.GetString "amqp.exchange.type"}}
 irods:
     base: "{{.GetString "irods.base"}}"
 porklock:
