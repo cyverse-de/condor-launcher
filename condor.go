@@ -11,22 +11,6 @@
 // requires a lot of ports to be opened up, which doesn't play nicely with
 // Docker.
 //
-// Required configuration keys are:
-//   amqp.uri
-//   irods.user
-//   irods.pass
-//   irods.host
-//   irods.port
-//   irods.base
-//   irods.resc
-//   irods.zone
-//   condor.condor_config
-//   condor.path_env_var
-//   condor.log_path
-//   condor.request_disk
-//   porklock.image
-//   porklock.tag
-//
 package main
 
 import (
@@ -92,44 +76,22 @@ type Messenger interface {
 
 // CondorLauncher contains the condor-launcher application state.
 type CondorLauncher struct {
-	cfg    *viper.Viper
-	client Messenger
-	fs     fsys
+	cfg          *viper.Viper
+	client       Messenger
+	fs           fsys
+	condorSubmit string //path to the condor_submit executable
+	condorRm     string // path to the condor_rm executable
 }
 
 // New returns a new *CondorLauncher
-func New(c *viper.Viper, client Messenger, fs fsys) *CondorLauncher {
+func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm string) *CondorLauncher {
 	return &CondorLauncher{
-		cfg:    c,
-		client: client,
-		fs:     fs,
+		cfg:          c,
+		client:       client,
+		fs:           fs,
+		condorSubmit: condorSubmit,
+		condorRm:     condorRm,
 	}
-}
-
-func (cl *CondorLauncher) submit(cmdPath string, s *model.Job) (string, error) {
-	csPath, err := exec.LookPath("condor_submit")
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to find condor_submit in $PATH")
-	}
-	if !path.IsAbs(csPath) {
-		csPath, err = filepath.Abs(csPath)
-		if err != nil {
-			return "", errors.Wrapf(err, "failed to get the absolute path to %s", csPath)
-		}
-	}
-	cmd := exec.Command(csPath, cmdPath)
-	cmd.Dir = path.Dir(cmdPath)
-	cmd.Env = []string{
-		fmt.Sprintf("PATH=%s", cl.cfg.GetString("condor.path_env_var")),
-		fmt.Sprintf("CONDOR_CONFIG=%s", cl.cfg.GetString("condor.condor_config")),
-	}
-	output, err := cmd.CombinedOutput()
-	log.Infof("Output of condor_submit:\n%s\n", output)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to execute %s", csPath)
-	}
-	log.Infof("Extracted ID: %s\n", string(model.ExtractJobID(output)))
-	return string(model.ExtractJobID(output)), err
 }
 
 func (cl *CondorLauncher) launch(s *model.Job) (string, error) {
@@ -138,35 +100,31 @@ func (cl *CondorLauncher) launch(s *model.Job) (string, error) {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to create submission directory"))
 		return "", err
 	}
-	cmd, _, _, err := CreateSubmissionFiles(sdir, cl.cfg, s)
+	submissionPath, _, _, err := CreateSubmissionFiles(sdir, cl.cfg, s)
 	if err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to create submission files"))
 		return "", err
 	}
-	id, err := cl.submit(cmd, s)
-	if err != nil {
-		log.Errorf("%+v\n", errors.Wrap(err, "failed to submit job"))
-		return "", err
+	cmd := exec.Command(cl.condorSubmit, submissionPath)
+	cmd.Dir = path.Dir(submissionPath)
+	cmd.Env = []string{
+		fmt.Sprintf("PATH=%s", cl.cfg.GetString("condor.path_env_var")),
+		fmt.Sprintf("CONDOR_CONFIG=%s", cl.cfg.GetString("condor.condor_config")),
 	}
+	output, err := cmd.CombinedOutput()
+	log.Infof("Output of condor_submit:\n%s\n", output)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to execute %s", cl.condorSubmit)
+	}
+	id := string(model.ExtractJobID(output))
 	log.Infof("Condor job id is %s\n", id)
 	return id, err
 }
 
 func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
-	crPath, err := exec.LookPath("condor_rm")
-	log.Infof("condor_rm found at %s", crPath)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to find condor_rm on the $PATH")
-	}
-	if !path.IsAbs(crPath) {
-		crPath, err = filepath.Abs(crPath)
-		if err != nil {
-			return "", errors.Wrapf(err, "failed to get the absolute path for %s", crPath)
-		}
-	}
 	pathEnv := cl.cfg.GetString("condor.path_env_var")
 	condorConfig := cl.cfg.GetString("condor.condor_config")
-	cmd := exec.Command(crPath, s.CondorID)
+	cmd := exec.Command(cl.condorRm, s.CondorID)
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", pathEnv),
 		fmt.Sprintf("CONDOR_CONFIG=%s", condorConfig),
@@ -174,7 +132,7 @@ func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
 	output, err := cmd.CombinedOutput()
 	log.Infof("condor_rm output for job %s:\n%s\n", s.CondorID, output)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to execute %s", crPath)
+		return "", errors.Wrapf(err, "failed to execute %s", cl.condorRm)
 	}
 	return string(output), err
 }
@@ -285,6 +243,27 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(-1)
 	}
+	csPath, err := exec.LookPath("condor_submit")
+	if err != nil {
+		log.Fatal(errors.Wrapf(err, "failed to find condor_submit in $PATH"))
+	}
+	if !path.IsAbs(csPath) {
+		csPath, err = filepath.Abs(csPath)
+		if err != nil {
+			log.Fatal(errors.Wrapf(err, "failed to get the absolute path to %s", csPath))
+		}
+	}
+	crPath, err := exec.LookPath("condor_rm")
+	log.Infof("condor_rm found at %s", crPath)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to find condor_rm on the $PATH"))
+	}
+	if !path.IsAbs(crPath) {
+		crPath, err = filepath.Abs(crPath)
+		if err != nil {
+			log.Fatal(errors.Wrapf(err, "failed to get the absolute path for %s", crPath))
+		}
+	}
 	cfg, err := configurate.InitDefaults(*cfgPath, configurate.JobServicesDefaults)
 	if err != nil {
 		log.Fatalf("%+v\n", errors.Wrap(err, "failed to initialize configuration defaults"))
@@ -298,8 +277,7 @@ func main() {
 		log.Fatalf("%+v\n", errors.Wrap(err, "failed to create new AMQP client"))
 	}
 	defer client.Close()
-	localfs := &osys{}
-	launcher := New(cfg, client, localfs)
+	launcher := New(cfg, client, &osys{}, csPath, crPath)
 	launcher.client.SetupPublishing(exchangeName)
 	go launcher.client.Listen()
 	ticker, err := launcher.startHeldTicker(client)
