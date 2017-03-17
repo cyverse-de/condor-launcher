@@ -2,18 +2,13 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"os/exec"
 	"path"
 	"path/filepath"
 
-	"github.com/cyverse-de/messaging"
-	"github.com/cyverse-de/model"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-
-	"github.com/streadway/amqp"
 )
 
 // ExecCondorQ runs the condor_q -long command and returns its output.
@@ -154,87 +149,4 @@ func heldQueueEntries(output []byte) []queueEntry {
 		}
 	}
 	return retval
-}
-
-func (cl *CondorLauncher) killHeldJobs(client *messaging.Client) {
-	var (
-		err         error
-		cmdOutput   []byte
-		heldEntries []queueEntry
-	)
-	log.Infoln("Looking for jobs in the held state...")
-	if cmdOutput, err = ExecCondorQ(cl.cfg); err != nil {
-		log.Errorf("%+v\n", errors.Wrap(err, "error running condor_q"))
-		return
-	}
-	heldEntries = heldQueueEntries(cmdOutput)
-	log.Infof("There are %d jobs in the held state", len(heldEntries))
-	for _, entry := range heldEntries {
-		if entry.InvocationID != "" {
-			log.Infof("Sending stop request for invocation id %s", entry.InvocationID)
-			if err = client.SendStopRequest(
-				entry.InvocationID,
-				"admin",
-				"Job was in held state",
-			); err != nil {
-				log.Errorf("%+v\n", errors.Wrap(err, "error sending stop request"))
-			}
-		}
-	}
-}
-
-func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Delivery) {
-	return func(d amqp.Delivery) {
-		var (
-			condorQOutput  []byte
-			condorRMOutput []byte
-			invID          string
-			err            error
-		)
-		d.Ack(false)
-		log.Infoln("in stopHandler")
-		stopRequest := &messaging.StopRequest{}
-		if err = json.Unmarshal(d.Body, stopRequest); err != nil {
-			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal the stop request body"))
-			return
-		}
-		invID = stopRequest.InvocationID
-		log.Infoln("Running condor_q...")
-		if condorQOutput, err = ExecCondorQ(cl.cfg); err != nil {
-			log.Errorf("%+v\n", errors.Wrap(err, "failed to exec condor_q"))
-			return
-		}
-		log.Infoln("Done running condor_q")
-		entries := queueEntriesByInvocationID(condorQOutput, invID)
-		log.Infof("Number of entries for job %s is %d", invID, len(entries))
-		for _, entry := range entries {
-			if entry.CondorID == "" {
-				continue
-			}
-			condorID := entry.CondorID
-			log.Infof("Running 'condor_rm %s'", condorID)
-			if condorRMOutput, err = ExecCondorRm(condorID, cl.cfg); err != nil {
-				log.Errorf("%+v\n", errors.Wrapf(err, "failed to run 'condor_rm %s'", condorID))
-				continue
-			}
-			fauxJob := model.New(cl.cfg)
-			fauxJob.InvocationID = invID
-			update := &messaging.UpdateMessage{
-				Job:     fauxJob,
-				State:   messaging.FailedState,
-				Message: "Job was killed",
-			}
-			if err = client.PublishJobUpdate(update); err != nil {
-				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a failed job"))
-			}
-			log.Infof("Output of 'condor_rm %s':\n%s", condorID, condorRMOutput)
-		}
-	}
-}
-
-// RegisterStopHandler registers a handler for all stop requests.
-func (cl *CondorLauncher) RegisterStopHandler(client *messaging.Client) {
-	exchangeName := cl.cfg.GetString("amqp.exchange.name")
-	exchangeType := cl.cfg.GetString("amqp.exchange.type")
-	client.AddConsumer(exchangeName, exchangeType, "condor-launcher-stops", messaging.StopRequestKey("*"), cl.stopHandler(client))
 }

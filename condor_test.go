@@ -403,26 +403,6 @@ func (m *MockMessenger) SetupPublishing(exchange string) error {
 	return nil
 }
 
-func TestHandlePing(t *testing.T) {
-	inittests(t)
-	client := &MockMessenger{
-		publishedMessages: make([]MockMessage, 0),
-	}
-	filesystem := newtsys()
-	launcher := New(cfg, client, filesystem, "condor_submit", "condor_rm")
-	delivery := amqp.Delivery{
-		RoutingKey: "events.condor-launcher.ping",
-	}
-	launcher.handlePing(delivery)
-	mm := launcher.client.(*MockMessenger)
-	if len(mm.publishedMessages) != 1 {
-		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))
-	}
-	if mm.publishedMessages[0].key != pongKey {
-		t.Errorf("routing key was %s instead of %s", mm.publishedMessages[0].key, pongKey)
-	}
-}
-
 func TestHandleEvents(t *testing.T) {
 	inittests(t)
 	client := &MockMessenger{
@@ -433,7 +413,7 @@ func TestHandleEvents(t *testing.T) {
 	delivery := amqp.Delivery{
 		RoutingKey: "events.condor-launcher.ping",
 	}
-	launcher.handleEvents(delivery)
+	launcher.routeEvents(delivery)
 	mm := launcher.client.(*MockMessenger)
 	if len(mm.publishedMessages) != 1 {
 		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))
@@ -453,7 +433,7 @@ func TestHandleBadEvents(t *testing.T) {
 	delivery := amqp.Delivery{
 		RoutingKey: "events.condor-launcher.pinadsfasdfg",
 	}
-	launcher.handleEvents(delivery)
+	launcher.routeEvents(delivery)
 	mm := launcher.client.(*MockMessenger)
 	if len(mm.publishedMessages) != 0 {
 		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))
