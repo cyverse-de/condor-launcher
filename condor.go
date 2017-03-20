@@ -94,7 +94,7 @@ func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm strin
 	}
 }
 
-func (cl *CondorLauncher) launch(s *model.Job) (string, error) {
+func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) (string, error) {
 	sdir, err := CreateSubmissionDirectory(s)
 	if err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to create submission directory"))
@@ -108,8 +108,8 @@ func (cl *CondorLauncher) launch(s *model.Job) (string, error) {
 	cmd := exec.Command(cl.condorSubmit, submissionPath)
 	cmd.Dir = path.Dir(submissionPath)
 	cmd.Env = []string{
-		fmt.Sprintf("PATH=%s", cl.cfg.GetString("condor.path_env_var")),
-		fmt.Sprintf("CONDOR_CONFIG=%s", cl.cfg.GetString("condor.condor_config")),
+		fmt.Sprintf("PATH=%s", condorPath),
+		fmt.Sprintf("CONDOR_CONFIG=%s", condorConfig),
 	}
 	output, err := cmd.CombinedOutput()
 	log.Infof("Output of condor_submit:\n%s\n", output)
@@ -144,49 +144,51 @@ func (cl *CondorLauncher) routeEvents(delivery amqp.Delivery) {
 }
 
 // handleLaunchRequests triggers Condor jobs in response to launch request messages.
-func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
-	body := delivery.Body
-	if err := delivery.Ack(false); err != nil {
-		log.Error(errors.Wrap(err, "failed to ack amqp launch request delivery"))
-	}
-	req := messaging.JobRequest{}
-	err := json.Unmarshal(body, &req)
-	if err != nil {
-		log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal launch request json"))
-		log.Error(string(body[:]))
-		return
-	}
-	if req.Job.RequestDisk == "" {
-		req.Job.RequestDisk = "0"
-	}
-	switch req.Command {
-	case messaging.Launch:
-		jobID, err := cl.launch(req.Job)
+func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) func(d amqp.Delivery) {
+	return func(delivery amqp.Delivery) {
+		body := delivery.Body
+		if err := delivery.Ack(false); err != nil {
+			log.Error(errors.Wrap(err, "failed to ack amqp launch request delivery"))
+		}
+		req := messaging.JobRequest{}
+		err := json.Unmarshal(body, &req)
 		if err != nil {
-			log.Errorf("%+v\n", err)
-			err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
-				Job:     req.Job,
-				State:   messaging.FailedState,
-				Message: fmt.Sprintf("condor-launcher failed to launch job:\n %s", err),
-			})
+			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal launch request json"))
+			log.Error(string(body[:]))
+			return
+		}
+		if req.Job.RequestDisk == "" {
+			req.Job.RequestDisk = "0"
+		}
+		switch req.Command {
+		case messaging.Launch:
+			jobID, err := cl.launch(req.Job, condorPath, condorConfig)
 			if err != nil {
-				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish launch failure job update"))
-			}
-		} else {
-			log.Infof("Launched Condor ID %s", jobID)
-			err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
-				Job:     req.Job,
-				State:   messaging.SubmittedState,
-				Message: fmt.Sprintf("Launched Condor ID %s", jobID),
-			})
-			if err != nil {
-				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish successful launch job update"))
+				log.Errorf("%+v\n", err)
+				err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
+					Job:     req.Job,
+					State:   messaging.FailedState,
+					Message: fmt.Sprintf("condor-launcher failed to launch job:\n %s", err),
+				})
+				if err != nil {
+					log.Errorf("%+v\n", errors.Wrap(err, "failed to publish launch failure job update"))
+				}
+			} else {
+				log.Infof("Launched Condor ID %s", jobID)
+				err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
+					Job:     req.Job,
+					State:   messaging.SubmittedState,
+					Message: fmt.Sprintf("Launched Condor ID %s", jobID),
+				})
+				if err != nil {
+					log.Errorf("%+v\n", errors.Wrap(err, "failed to publish successful launch job update"))
+				}
 			}
 		}
 	}
 }
 
-func (cl *CondorLauncher) stopHandler(client *messaging.Client, condorPath, condorConfig string) func(d amqp.Delivery) {
+func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d amqp.Delivery) {
 	return func(d amqp.Delivery) {
 		var (
 			condorQOutput  []byte
@@ -226,7 +228,7 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client, condorPath, cond
 				State:   messaging.FailedState,
 				Message: "Job was killed",
 			}
-			if err = client.PublishJobUpdate(update); err != nil {
+			if err = cl.client.PublishJobUpdate(update); err != nil {
 				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a failed job"))
 			}
 			log.Infof("Output of 'condor_rm %s':\n%s", condorID, condorRMOutput)
@@ -350,7 +352,7 @@ func main() {
 		exchangeType,
 		"condor-launcher-stops",
 		messaging.StopRequestKey("*"),
-		launcher.stopHandler(client, condorPath, condorConfig),
+		launcher.stopHandler(condorPath, condorConfig),
 	)
 	launcher.client.AddConsumer(
 		exchangeName,
@@ -365,7 +367,7 @@ func main() {
 		exchangeType,
 		"condor_launches",
 		messaging.LaunchesKey,
-		launcher.handleLaunchRequests,
+		launcher.handleLaunchRequests(condorPath, condorConfig),
 	)
 	spin := make(chan int)
 	<-spin

@@ -313,7 +313,7 @@ func TestLaunch(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	actual, err := cl.launch(j)
+	actual, err := cl.launch(j, "", "")
 	if err != nil {
 		t.Error(err)
 	}

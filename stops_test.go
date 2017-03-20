@@ -554,8 +554,7 @@ func TestStopHandler(t *testing.T) {
 		io.Copy(&buf, r)
 		coord <- buf.String()
 	}()
-	client := GetClient(t)
-	cl.stopHandler(client, "", "")(msg)
+	cl.stopHandler("", "")(msg)
 	w.Close()
 	actual := <-coord
 	if !strings.Contains(actual, "Running condor_q...") {
