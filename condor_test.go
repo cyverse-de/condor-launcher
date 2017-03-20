@@ -1,12 +1,15 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
+	"path/filepath"
 	"testing"
+
+	"github.com/pkg/errors"
 
 	"github.com/cyverse-de/configurate"
 	"github.com/cyverse-de/messaging"
@@ -114,12 +117,8 @@ func (t *tsys) WriteFile(path string, contents []byte, mode os.FileMode) error {
 
 func TestGenerateCondorSubmit(t *testing.T) {
 	s := inittests(t)
-	filesystem := newtsys()
-	cl, err := New(cfg, nil, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
-	actual, err := cl.GenerateCondorSubmit(s)
+
+	actual, err := GenerateFile(SubmissionTemplate, s)
 	if err != nil {
 		t.Error(err)
 	}
@@ -153,13 +152,8 @@ queue
 
 func TestGenerateCondorSubmitGroup(t *testing.T) {
 	s := inittests(t)
-	filesystem := newtsys()
-	cl, err := New(cfg, nil, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
 	s.Group = "foo"
-	actual, err := cl.GenerateCondorSubmit(s)
+	actual, err := GenerateFile(SubmissionTemplate, s)
 	if err != nil {
 		t.Error(err)
 	}
@@ -196,12 +190,7 @@ queue
 
 func TestGenerateCondorSubmitNoVolumes(t *testing.T) {
 	s := inittestsFile(t, "test/no_volumes_submission.json")
-	filesystem := newtsys()
-	cl, err := New(cfg, nil, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
-	actual, err := cl.GenerateCondorSubmit(s)
+	actual, err := GenerateFile(SubmissionTemplate, s)
 	if err != nil {
 		t.Error(err)
 	}
@@ -235,11 +224,8 @@ queue
 func TestCreateSubmissionDirectory(t *testing.T) {
 	s := inittests(t)
 	filesystem := newtsys()
-	cl, err := New(cfg, nil, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
-	dir, err := cl.CreateSubmissionDirectory(s)
+	cl := New(cfg, nil, filesystem, "condor_submit", "condor_rm")
+	dir, err := CreateSubmissionDirectory(s)
 	if err != nil {
 		t.Error(err)
 	}
@@ -259,15 +245,12 @@ func TestCreateSubmissionDirectory(t *testing.T) {
 func TestCreateSubmissionFiles(t *testing.T) {
 	s := inittests(t)
 	filesystem := newtsys()
-	cl, err := New(cfg, nil, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
-	dir, err := cl.CreateSubmissionDirectory(s)
+	cl := New(cfg, nil, filesystem, "condor_submit", "condor_rm")
+	dir, err := CreateSubmissionDirectory(s)
 	if err != nil {
 		t.Fatal(err)
 	}
-	cmd, sh, c, err := cl.CreateSubmissionFiles(dir, s)
+	cmd, sh, c, err := CreateSubmissionFiles(dir, cl.cfg, s)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,49 +280,31 @@ func TestCreateSubmissionFiles(t *testing.T) {
 	_inittests(t, false)
 }
 
-func TestCondorSubmit(t *testing.T) {
-	s := inittests(t)
-	filesystem := newtsys()
-	PATH := fmt.Sprintf(".:%s", os.Getenv("PATH"))
-	err := os.Setenv("PATH", PATH)
-	if err != nil {
-		t.Error(err)
-	}
-	cl, err := New(cfg, nil, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
-	dir, err := cl.CreateSubmissionDirectory(s)
-	if err != nil {
-		t.Error(err)
-	}
-	cmd, _, _, err := cl.CreateSubmissionFiles(dir, s)
-	if err != nil {
-		t.Error(err)
-	}
-	actual, err := cl.submit(cmd, s)
-	if err != nil {
-		t.Error(err)
-	}
-	expected := "10000"
-	if actual != expected {
-		t.Errorf("CondorSubmit() returned %s instead of %s", actual, expected)
-	}
-	logPath := cl.cfg.GetString("condor.log_path")
-	parent := path.Join(logPath, s.Submitter)
-	err = os.RemoveAll(parent)
-	if err != nil {
-		t.Error(err)
-	}
-}
-
 func TestLaunch(t *testing.T) {
 	inittests(t)
-	filesystem := newtsys()
-	cl, err := New(cfg, nil, filesystem)
+	csPath, err := exec.LookPath("condor_submit")
 	if err != nil {
-		t.Error(err)
+		t.Error(errors.Wrapf(err, "failed to find condor_submit in $PATH"))
 	}
+	if !path.IsAbs(csPath) {
+		csPath, err = filepath.Abs(csPath)
+		if err != nil {
+			t.Error(errors.Wrapf(err, "failed to get the absolute path to %s", csPath))
+		}
+	}
+	crPath, err := exec.LookPath("condor_rm")
+	log.Infof("condor_rm found at %s", crPath)
+	if err != nil {
+		t.Error(errors.Wrap(err, "failed to find condor_rm on the $PATH"))
+	}
+	if !path.IsAbs(crPath) {
+		crPath, err = filepath.Abs(crPath)
+		if err != nil {
+			t.Error(errors.Wrapf(err, "failed to get the absolute path for %s", crPath))
+		}
+	}
+	filesystem := newtsys()
+	cl := New(cfg, nil, filesystem, csPath, crPath)
 	data, err := JSONData("test/test_submission.json")
 	if err != nil {
 		t.Error(err)
@@ -348,7 +313,7 @@ func TestLaunch(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	actual, err := cl.launch(j)
+	actual, err := cl.launch(j, "", "")
 	if err != nil {
 		t.Error(err)
 	}
@@ -360,29 +325,6 @@ func TestLaunch(t *testing.T) {
 	err = os.RemoveAll(parent)
 	if err != nil {
 		t.Error(err)
-	}
-}
-
-func TestStop(t *testing.T) {
-	inittests(t)
-	filesystem := newtsys()
-	cl, err := New(cfg, nil, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
-	//Start up a fake jex-events
-	jr := &model.Job{
-		CondorID:     "10000",
-		Submitter:    "test_this_is_a_test",
-		AppID:        "c7f05682-23c8-4182-b9a2-e09650a5f49b",
-		InvocationID: "00000000-0000-0000-0000-000000000000",
-	}
-	actual, err := cl.stop(jr)
-	if err != nil {
-		t.Error(err)
-	}
-	if actual == "" {
-		t.Errorf("stop returned an empty string")
 	}
 }
 
@@ -441,43 +383,17 @@ func (m *MockMessenger) SetupPublishing(exchange string) error {
 	return nil
 }
 
-func TestHandlePing(t *testing.T) {
-	inittests(t)
-	client := &MockMessenger{
-		publishedMessages: make([]MockMessage, 0),
-	}
-	filesystem := newtsys()
-	launcher, err := New(cfg, client, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
-	delivery := amqp.Delivery{
-		RoutingKey: "events.condor-launcher.ping",
-	}
-	launcher.handlePing(delivery)
-	mm := launcher.client.(*MockMessenger)
-	if len(mm.publishedMessages) != 1 {
-		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))
-	}
-	if mm.publishedMessages[0].key != pongKey {
-		t.Errorf("routing key was %s instead of %s", mm.publishedMessages[0].key, pongKey)
-	}
-}
-
 func TestHandleEvents(t *testing.T) {
 	inittests(t)
 	client := &MockMessenger{
 		publishedMessages: make([]MockMessage, 0),
 	}
 	filesystem := newtsys()
-	launcher, err := New(cfg, client, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
+	launcher := New(cfg, client, filesystem, "condor_submit", "condor_rm")
 	delivery := amqp.Delivery{
 		RoutingKey: "events.condor-launcher.ping",
 	}
-	launcher.handleEvents(delivery)
+	launcher.routeEvents(delivery)
 	mm := launcher.client.(*MockMessenger)
 	if len(mm.publishedMessages) != 1 {
 		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))
@@ -493,14 +409,11 @@ func TestHandleBadEvents(t *testing.T) {
 		publishedMessages: make([]MockMessage, 0),
 	}
 	filesystem := newtsys()
-	launcher, err := New(cfg, client, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
+	launcher := New(cfg, client, filesystem, "condor_submit", "condor_rm")
 	delivery := amqp.Delivery{
 		RoutingKey: "events.condor-launcher.pinadsfasdfg",
 	}
-	launcher.handleEvents(delivery)
+	launcher.routeEvents(delivery)
 	mm := launcher.client.(*MockMessenger)
 	if len(mm.publishedMessages) != 0 {
 		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))

@@ -460,12 +460,7 @@ func TestCondorID(t *testing.T) {
 
 func TestExecCondorQ(t *testing.T) {
 	inittests(t)
-	filesystem := newtsys()
-	cl, err := New(cfg, nil, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
-	output, err := cl.ExecCondorQ()
+	output, err := ExecCondorQ("", "")
 	if err != nil {
 		t.Error(err)
 	}
@@ -512,11 +507,8 @@ func TestExecCondorQ(t *testing.T) {
 func TestExecCondorRm(t *testing.T) {
 	inittests(t)
 	filesystem := newtsys()
-	cl, err := New(cfg, nil, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
-	actual, err := cl.ExecCondorRm("foo")
+	cl := New(cfg, nil, filesystem, "condor_submit", "condor_rm")
+	actual, err := ExecCondorRm("foo", cl.cfg)
 	if err != nil {
 		t.Error(err)
 	}
@@ -537,10 +529,7 @@ func TestStopHandler(t *testing.T) {
 	}
 	inittests(t)
 	filesystem := newtsys()
-	cl, err := New(cfg, nil, filesystem)
-	if err != nil {
-		t.Error(err)
-	}
+	cl := New(cfg, nil, filesystem, "condor_submit", "condor_rm")
 	stopMsg := messaging.StopRequest{
 		InvocationID: "b788569f-6948-4586-b5bd-5ea096986331",
 	}
@@ -565,8 +554,7 @@ func TestStopHandler(t *testing.T) {
 		io.Copy(&buf, r)
 		coord <- buf.String()
 	}()
-	client := GetClient(t)
-	cl.stopHandler(client)(msg)
+	cl.stopHandler("", "")(msg)
 	w.Close()
 	actual := <-coord
 	if !strings.Contains(actual, "Running condor_q...") {
