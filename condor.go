@@ -186,7 +186,7 @@ func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
 	}
 }
 
-func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Delivery) {
+func (cl *CondorLauncher) stopHandler(client *messaging.Client, condorPath, condorConfig string) func(d amqp.Delivery) {
 	return func(d amqp.Delivery) {
 		var (
 			condorQOutput  []byte
@@ -202,7 +202,7 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 		}
 		invID = stopRequest.InvocationID
 		log.Infoln("Running condor_q...")
-		if condorQOutput, err = ExecCondorQ(cl.cfg); err != nil {
+		if condorQOutput, err = ExecCondorQ(condorPath, condorConfig); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to exec condor_q"))
 			return
 		}
@@ -234,14 +234,14 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 	}
 }
 
-func killHeldJobs(client *messaging.Client, cfg *viper.Viper) {
+func killHeldJobs(client *messaging.Client, condorPath, condorConfig string) {
 	var (
 		err         error
 		cmdOutput   []byte
 		heldEntries []queueEntry
 	)
 	log.Infoln("Looking for jobs in the held state...")
-	if cmdOutput, err = ExecCondorQ(cfg); err != nil {
+	if cmdOutput, err = ExecCondorQ(condorPath, condorConfig); err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "error running condor_q"))
 		return
 	}
@@ -263,7 +263,7 @@ func killHeldJobs(client *messaging.Client, cfg *viper.Viper) {
 
 // startHeldTicker starts up the code that periodically fires and clean up held
 // jobs
-func startHeldTicker(client *messaging.Client, cfg *viper.Viper) (*time.Ticker, error) {
+func startHeldTicker(client *messaging.Client, condorPath, condorConfig string) (*time.Ticker, error) {
 	d, err := time.ParseDuration("30s")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse duration '30s'")
@@ -273,7 +273,7 @@ func startHeldTicker(client *messaging.Client, cfg *viper.Viper) (*time.Ticker, 
 		for {
 			select {
 			case <-t.C:
-				killHeldJobs(client, cfg)
+				killHeldJobs(client, condorPath, condorConfig)
 			}
 		}
 	}(t, client)
@@ -334,7 +334,13 @@ func main() {
 	launcher := New(cfg, client, &osys{}, csPath, crPath)
 	launcher.client.SetupPublishing(exchangeName)
 	go launcher.client.Listen()
-	ticker, err := startHeldTicker(client, cfg)
+	condorPath := cfg.GetString("condor.path_env_var")
+	condorConfig := cfg.GetString("condor.condor_config")
+	ticker, err := startHeldTicker(
+		client,
+		condorPath,
+		condorConfig,
+	)
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
@@ -344,7 +350,7 @@ func main() {
 		exchangeType,
 		"condor-launcher-stops",
 		messaging.StopRequestKey("*"),
-		launcher.stopHandler(client),
+		launcher.stopHandler(client, condorPath, condorConfig),
 	)
 	launcher.client.AddConsumer(
 		exchangeName,

@@ -12,7 +12,7 @@ import (
 )
 
 // ExecCondorQ runs the condor_q -long command and returns its output.
-func ExecCondorQ(cfg *viper.Viper) ([]byte, error) {
+func ExecCondorQ(condorPath, condorConfig string) ([]byte, error) {
 	var (
 		output []byte
 		err    error
@@ -28,11 +28,9 @@ func ExecCondorQ(cfg *viper.Viper) ([]byte, error) {
 		}
 	}
 	cmd := exec.Command(csPath, "-long")
-	pathEnv := cfg.GetString("condor.path_env_var")
-	condorCfg := cfg.GetString("condor.condor_config")
 	cmd.Env = []string{
-		fmt.Sprintf("PATH=%s", pathEnv),
-		fmt.Sprintf("CONDOR_CONFIG=%s", condorCfg),
+		fmt.Sprintf("PATH=%s", condorPath),
+		fmt.Sprintf("CONDOR_CONFIG=%s", condorConfig),
 	}
 	output, err = cmd.CombinedOutput()
 	if err != nil {

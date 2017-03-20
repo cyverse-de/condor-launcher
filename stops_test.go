@@ -460,9 +460,7 @@ func TestCondorID(t *testing.T) {
 
 func TestExecCondorQ(t *testing.T) {
 	inittests(t)
-	filesystem := newtsys()
-	cl := New(cfg, nil, filesystem, "condor_submit", "condor_rm")
-	output, err := ExecCondorQ(cl.cfg)
+	output, err := ExecCondorQ("", "")
 	if err != nil {
 		t.Error(err)
 	}
@@ -557,7 +555,7 @@ func TestStopHandler(t *testing.T) {
 		coord <- buf.String()
 	}()
 	client := GetClient(t)
-	cl.stopHandler(client)(msg)
+	cl.stopHandler(client, "", "")(msg)
 	w.Close()
 	actual := <-coord
 	if !strings.Contains(actual, "Running condor_q...") {
