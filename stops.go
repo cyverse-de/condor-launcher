@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 )
 
 // ExecCondorQ runs the condor_q -long command and returns its output.
@@ -41,7 +40,7 @@ func ExecCondorQ(condorPath, condorConfig string) ([]byte, error) {
 
 // ExecCondorRm runs condor_rm, passing it the condor ID. Returns the output
 // of the command and passibly an error.
-func ExecCondorRm(condorID string, cfg *viper.Viper) ([]byte, error) {
+func ExecCondorRm(condorID string, condorPath, condorConfig string) ([]byte, error) {
 	var (
 		output []byte
 		err    error
@@ -57,11 +56,9 @@ func ExecCondorRm(condorID string, cfg *viper.Viper) ([]byte, error) {
 			return output, errors.Wrapf(err, "failed to get the absolute path of %s", crPath)
 		}
 	}
-	pathEnv := cfg.GetString("condor.path_env_var")
-	condorConfig := cfg.GetString("condor.condor_config")
 	cmd := exec.Command(crPath, condorID)
 	cmd.Env = []string{
-		fmt.Sprintf("PATH=%s", pathEnv),
+		fmt.Sprintf("PATH=%s", condorPath),
 		fmt.Sprintf("CONDOR_CONFIG=%s", condorConfig),
 	}
 	output, err = cmd.CombinedOutput()

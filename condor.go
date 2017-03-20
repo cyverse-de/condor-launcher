@@ -282,7 +282,7 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 			}
 			condorID := entry.CondorID
 			log.Infof("Running 'condor_rm %s'", condorID)
-			if condorRMOutput, err = ExecCondorRm(condorID, cl.cfg); err != nil {
+			if condorRMOutput, err = ExecCondorRm(condorID, condorPath, condorConfig); err != nil {
 				log.Errorf("%+v\n", errors.Wrapf(err, "failed to run 'condor_rm %s'", condorID))
 				continue
 			}
