@@ -118,7 +118,7 @@ func (t *tsys) WriteFile(path string, contents []byte, mode os.FileMode) error {
 func TestGenerateCondorSubmit(t *testing.T) {
 	s := inittests(t)
 
-	actual, err := GenerateCondorSubmit(SubmissionTemplate, s)
+	actual, err := GenerateFile(SubmissionTemplate, s)
 	if err != nil {
 		t.Error(err)
 	}
@@ -153,7 +153,7 @@ queue
 func TestGenerateCondorSubmitGroup(t *testing.T) {
 	s := inittests(t)
 	s.Group = "foo"
-	actual, err := GenerateCondorSubmit(SubmissionTemplate, s)
+	actual, err := GenerateFile(SubmissionTemplate, s)
 	if err != nil {
 		t.Error(err)
 	}
@@ -190,7 +190,7 @@ queue
 
 func TestGenerateCondorSubmitNoVolumes(t *testing.T) {
 	s := inittestsFile(t, "test/no_volumes_submission.json")
-	actual, err := GenerateCondorSubmit(SubmissionTemplate, s)
+	actual, err := GenerateFile(SubmissionTemplate, s)
 	if err != nil {
 		t.Error(err)
 	}

@@ -45,11 +45,11 @@ func CreateSubmissionDirectory(s *model.Job) (string, error) {
 // directory designated by 'dir'. The return values are the path to the iplant.cmd
 // file, and any errors, in that order.
 func CreateSubmissionFiles(dir string, cfg *viper.Viper, s *model.Job) (string, string, string, error) {
-	cmdContents, err := GenerateCondorSubmit(SubmissionTemplate, s)
+	cmdContents, err := GenerateFile(SubmissionTemplate, s)
 	if err != nil {
 		return "", "", "", err
 	}
-	jobConfigContents, err := GenerateJobConfig(JobConfigTemplate, cfg)
+	jobConfigContents, err := GenerateFile(JobConfigTemplate, cfg)
 	if err != nil {
 		return "", "", "", err
 	}
@@ -57,7 +57,16 @@ func CreateSubmissionFiles(dir string, cfg *viper.Viper, s *model.Job) (string, 
 	if err != nil {
 		return "", "", "", err
 	}
-	irodsContents, err := GenerateIRODSConfig(IRODSConfigTemplate, cfg)
+	c := &IRODSConfig{
+		IRODSHost: cfg.GetString("irods.host"),
+		IRODSPort: cfg.GetString("irods.port"),
+		IRODSUser: cfg.GetString("irods.user"),
+		IRODSPass: cfg.GetString("irods.pass"),
+		IRODSBase: cfg.GetString("irods.base"),
+		IRODSResc: cfg.GetString("irods.resc"),
+		IRODSZone: cfg.GetString("irods.zone"),
+	}
+	irodsContents, err := GenerateFile(IRODSConfigTemplate, c)
 	if err != nil {
 		return "", "", "", err
 	}

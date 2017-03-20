@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/cyverse-de/model"
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -74,7 +72,9 @@ porklock.irods-zone = {{.IRODSZone}}
 porklock.irods-resc = {{.IRODSResc}}
 `
 
-type irodsconfig struct {
+// IRODSConfig contains all of the values for the IRODS configuration file used
+// by the porklock tool out on a HTCondor compute node.
+type IRODSConfig struct {
 	IRODSHost string
 	IRODSPort string
 	IRODSUser string
@@ -84,43 +84,13 @@ type irodsconfig struct {
 	IRODSResc string
 }
 
-// GenerateIRODSConfig returns the contents of the irods-config file as a string.
-func GenerateIRODSConfig(t *template.Template, cfg *viper.Viper) (*bytes.Buffer, error) {
-	c := &irodsconfig{
-		IRODSHost: cfg.GetString("irods.host"),
-		IRODSPort: cfg.GetString("irods.port"),
-		IRODSUser: cfg.GetString("irods.user"),
-		IRODSPass: cfg.GetString("irods.pass"),
-		IRODSBase: cfg.GetString("irods.base"),
-		IRODSResc: cfg.GetString("irods.resc"),
-		IRODSZone: cfg.GetString("irods.zone"),
-	}
+// GenerateFile applies the data to the given template and returns a *bytes.Buffer
+// containing the result.
+func GenerateFile(t *template.Template, data interface{}) (*bytes.Buffer, error) {
 	var buffer bytes.Buffer
-	err := t.Execute(&buffer, c)
+	err := t.Execute(&buffer, data)
 	if err != nil {
-		return &buffer, errors.Wrap(err, "failed to apply data to the irods config template")
+		return &buffer, errors.Wrapf(err, "failed to apply data to the %s template", t.Name())
 	}
 	return &buffer, err
-}
-
-// GenerateCondorSubmit returns a string (or error) containing the contents
-// of what should go into an HTCondor submission file.
-func GenerateCondorSubmit(t *template.Template, submission *model.Job) (*bytes.Buffer, error) {
-	var buffer bytes.Buffer
-	err := t.Execute(&buffer, submission)
-	if err != nil {
-		return &buffer, errors.Wrap(err, "failed to apply data to the submission template")
-	}
-	return &buffer, nil
-}
-
-// GenerateJobConfig creates a string containing the config that gets passed
-// into the job.
-func GenerateJobConfig(t *template.Template, cfg *viper.Viper) (*bytes.Buffer, error) {
-	var buffer bytes.Buffer
-	err := t.Execute(&buffer, cfg)
-	if err != nil {
-		return &buffer, errors.Wrap(err, "failed to apply data to the job config template")
-	}
-	return &buffer, nil
 }

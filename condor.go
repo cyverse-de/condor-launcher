@@ -195,7 +195,6 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 			err            error
 		)
 		d.Ack(false)
-		log.Infoln("in stopHandler")
 		stopRequest := &messaging.StopRequest{}
 		if err = json.Unmarshal(d.Body, stopRequest); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal the stop request body"))
