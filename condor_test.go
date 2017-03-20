@@ -221,65 +221,6 @@ queue
 	}
 }
 
-func TestCreateSubmissionDirectory(t *testing.T) {
-	s := inittests(t)
-	filesystem := newtsys()
-	cl := New(cfg, nil, filesystem, "condor_submit", "condor_rm")
-	dir, err := CreateSubmissionDirectory(s)
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = os.Stat(dir)
-	if err != nil {
-		t.Error(err)
-	}
-	logPath := cl.cfg.GetString("condor.log_path")
-	parent := path.Join(logPath, s.Submitter)
-	err = os.RemoveAll(parent)
-	if err != nil {
-		t.Error(err)
-	}
-	_inittests(t, false)
-}
-
-func TestCreateSubmissionFiles(t *testing.T) {
-	s := inittests(t)
-	filesystem := newtsys()
-	cl := New(cfg, nil, filesystem, "condor_submit", "condor_rm")
-	dir, err := CreateSubmissionDirectory(s)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cmd, sh, c, err := CreateSubmissionFiles(dir, cl.cfg, s)
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = os.Stat(cmd)
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = os.Stat(sh)
-	if err != nil {
-		t.Error(err)
-	}
-	_, err = os.Stat(c)
-	if err != nil {
-		t.Error(err)
-	}
-	irodsPath := path.Join(path.Dir(cmd), "irods-config")
-	_, err = os.Stat(irodsPath)
-	if err != nil {
-		t.Error(err)
-	}
-	logPath := cl.cfg.GetString("condor.log_path")
-	parent := path.Join(logPath, s.Submitter)
-	err = os.RemoveAll(parent)
-	if err != nil {
-		t.Error(err)
-	}
-	_inittests(t, false)
-}
-
 func TestLaunch(t *testing.T) {
 	inittests(t)
 	csPath, err := exec.LookPath("condor_submit")

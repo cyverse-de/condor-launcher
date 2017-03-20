@@ -14,9 +14,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -95,16 +97,79 @@ func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm strin
 }
 
 func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) (string, error) {
-	sdir, err := CreateSubmissionDirectory(s)
-	if err != nil {
-		log.Errorf("%+v\n", errors.Wrap(err, "failed to create submission directory"))
-		return "", err
+	sdir := s.CondorLogDirectory()
+	if path.Base(sdir) != "logs" {
+		sdir = path.Join(sdir, "logs")
 	}
-	submissionPath, _, _, err := CreateSubmissionFiles(sdir, cl.cfg, s)
+	err := os.MkdirAll(sdir, 0755)
 	if err != nil {
-		log.Errorf("%+v\n", errors.Wrap(err, "failed to create submission files"))
-		return "", err
+		return "", errors.Wrapf(err, "failed to create the directory %s", sdir)
 	}
+	subfiles := []struct {
+		filename    string
+		filecontent []byte
+		template    *template.Template
+		data        interface{}
+		skipTmpl    bool // skip applying the data field to the template
+		jsonify     bool // marshal the data field as JSON and store it in the filecontent field
+		permissions os.FileMode
+	}{
+		{
+			filename:    path.Join(sdir, "iplant.cmd"),
+			template:    SubmissionTemplate,
+			data:        s,
+			permissions: 0644,
+		},
+		{
+			filename:    path.Join(sdir, "config"),
+			template:    JobConfigTemplate,
+			data:        cl.cfg,
+			permissions: 0644,
+		},
+		{
+			filename:    path.Join(sdir, "job"),
+			data:        s,
+			skipTmpl:    true,
+			jsonify:     true,
+			permissions: 0644,
+		},
+		{
+			filename: path.Join(sdir, "irods-config"),
+			template: IRODSConfigTemplate,
+			data: &IRODSConfig{
+				IRODSHost: cl.cfg.GetString("irods.host"),
+				IRODSPort: cl.cfg.GetString("irods.port"),
+				IRODSUser: cl.cfg.GetString("irods.user"),
+				IRODSPass: cl.cfg.GetString("irods.pass"),
+				IRODSBase: cl.cfg.GetString("irods.base"),
+				IRODSResc: cl.cfg.GetString("irods.resc"),
+				IRODSZone: cl.cfg.GetString("irods.zone"),
+			},
+			permissions: 0644,
+		},
+	}
+
+	for _, sf := range subfiles {
+		var fileContent *bytes.Buffer
+		if !sf.skipTmpl {
+			fileContent, err = GenerateFile(sf.template, sf.data)
+			if err != nil {
+				return "", err
+			}
+			sf.filecontent = fileContent.Bytes()
+		}
+		if sf.jsonify {
+			sf.filecontent, err = json.Marshal(sf.data)
+			if err != nil {
+				return "", nil
+			}
+		}
+		err = ioutil.WriteFile(sf.filename, sf.filecontent, sf.permissions)
+		if err != nil {
+			return "", errors.Wrapf(err, "failed to write to file %s", sf.filename)
+		}
+	}
+	submissionPath := subfiles[0].filename
 	cmd := exec.Command(cl.condorSubmit, submissionPath)
 	cmd.Dir = path.Dir(submissionPath)
 	cmd.Env = []string{
