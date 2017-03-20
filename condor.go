@@ -137,25 +137,6 @@ func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
 	return string(output), err
 }
 
-// startHeldTicker starts up the code that periodically fires and clean up held
-// jobs
-func (cl *CondorLauncher) startHeldTicker(client *messaging.Client) (*time.Ticker, error) {
-	d, err := time.ParseDuration("30s")
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse duration '30s'")
-	}
-	t := time.NewTicker(d)
-	go func(t *time.Ticker, client *messaging.Client) {
-		for {
-			select {
-			case <-t.C:
-				cl.killHeldJobs(client)
-			}
-		}
-	}(t, client)
-	return t, nil
-}
-
 // handleEvents accepts an amqp message, acks it, and delegates handling it to
 // another function.
 func (cl *CondorLauncher) routeEvents(delivery amqp.Delivery) {
@@ -221,33 +202,6 @@ func (cl *CondorLauncher) handleLaunchRequests(delivery amqp.Delivery) {
 	}
 }
 
-func (cl *CondorLauncher) killHeldJobs(client *messaging.Client) {
-	var (
-		err         error
-		cmdOutput   []byte
-		heldEntries []queueEntry
-	)
-	log.Infoln("Looking for jobs in the held state...")
-	if cmdOutput, err = ExecCondorQ(cl.cfg); err != nil {
-		log.Errorf("%+v\n", errors.Wrap(err, "error running condor_q"))
-		return
-	}
-	heldEntries = heldQueueEntries(cmdOutput)
-	log.Infof("There are %d jobs in the held state", len(heldEntries))
-	for _, entry := range heldEntries {
-		if entry.InvocationID != "" {
-			log.Infof("Sending stop request for invocation id %s", entry.InvocationID)
-			if err = client.SendStopRequest(
-				entry.InvocationID,
-				"admin",
-				"Job was in held state",
-			); err != nil {
-				log.Errorf("%+v\n", errors.Wrap(err, "error sending stop request"))
-			}
-		}
-	}
-}
-
 func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Delivery) {
 	return func(d amqp.Delivery) {
 		var (
@@ -297,11 +251,50 @@ func (cl *CondorLauncher) stopHandler(client *messaging.Client) func(d amqp.Deli
 	}
 }
 
-// RegisterStopHandler registers a handler for all stop requests.
-func (cl *CondorLauncher) RegisterStopHandler(client *messaging.Client) {
-	exchangeName := cl.cfg.GetString("amqp.exchange.name")
-	exchangeType := cl.cfg.GetString("amqp.exchange.type")
-	client.AddConsumer(exchangeName, exchangeType, "condor-launcher-stops", messaging.StopRequestKey("*"), cl.stopHandler(client))
+func killHeldJobs(client *messaging.Client, cfg *viper.Viper) {
+	var (
+		err         error
+		cmdOutput   []byte
+		heldEntries []queueEntry
+	)
+	log.Infoln("Looking for jobs in the held state...")
+	if cmdOutput, err = ExecCondorQ(cfg); err != nil {
+		log.Errorf("%+v\n", errors.Wrap(err, "error running condor_q"))
+		return
+	}
+	heldEntries = heldQueueEntries(cmdOutput)
+	log.Infof("There are %d jobs in the held state", len(heldEntries))
+	for _, entry := range heldEntries {
+		if entry.InvocationID != "" {
+			log.Infof("Sending stop request for invocation id %s", entry.InvocationID)
+			if err = client.SendStopRequest(
+				entry.InvocationID,
+				"admin",
+				"Job was in held state",
+			); err != nil {
+				log.Errorf("%+v\n", errors.Wrap(err, "error sending stop request"))
+			}
+		}
+	}
+}
+
+// startHeldTicker starts up the code that periodically fires and clean up held
+// jobs
+func startHeldTicker(client *messaging.Client, cfg *viper.Viper) (*time.Ticker, error) {
+	d, err := time.ParseDuration("30s")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to parse duration '30s'")
+	}
+	t := time.NewTicker(d)
+	go func(t *time.Ticker, client *messaging.Client) {
+		for {
+			select {
+			case <-t.C:
+				killHeldJobs(client, cfg)
+			}
+		}
+	}(t, client)
+	return t, nil
 }
 
 func main() {
@@ -358,12 +351,18 @@ func main() {
 	launcher := New(cfg, client, &osys{}, csPath, crPath)
 	launcher.client.SetupPublishing(exchangeName)
 	go launcher.client.Listen()
-	ticker, err := launcher.startHeldTicker(client)
+	ticker, err := startHeldTicker(client, cfg)
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
 	log.Infof("Started up the held state ticker: %#v", ticker)
-	launcher.RegisterStopHandler(client)
+	launcher.client.AddConsumer(
+		exchangeName,
+		exchangeType,
+		"condor-launcher-stops",
+		messaging.StopRequestKey("*"),
+		launcher.stopHandler(client),
+	)
 	launcher.client.AddConsumer(
 		exchangeName,
 		exchangeType,
