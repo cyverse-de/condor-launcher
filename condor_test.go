@@ -328,26 +328,6 @@ func TestLaunch(t *testing.T) {
 	}
 }
 
-func TestStop(t *testing.T) {
-	inittests(t)
-	filesystem := newtsys()
-	cl := New(cfg, nil, filesystem, "condor_submit", "condor_rm")
-	//Start up a fake jex-events
-	jr := &model.Job{
-		CondorID:     "10000",
-		Submitter:    "test_this_is_a_test",
-		AppID:        "c7f05682-23c8-4182-b9a2-e09650a5f49b",
-		InvocationID: "00000000-0000-0000-0000-000000000000",
-	}
-	actual, err := cl.stop(jr)
-	if err != nil {
-		t.Error(err)
-	}
-	if actual == "" {
-		t.Errorf("stop returned an empty string")
-	}
-}
-
 type MockConsumer struct {
 	exchange     string
 	exchangeType string

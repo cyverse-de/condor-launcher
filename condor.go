@@ -121,22 +121,6 @@ func (cl *CondorLauncher) launch(s *model.Job) (string, error) {
 	return id, err
 }
 
-func (cl *CondorLauncher) stop(s *model.Job) (string, error) {
-	pathEnv := cl.cfg.GetString("condor.path_env_var")
-	condorConfig := cl.cfg.GetString("condor.condor_config")
-	cmd := exec.Command(cl.condorRm, s.CondorID)
-	cmd.Env = []string{
-		fmt.Sprintf("PATH=%s", pathEnv),
-		fmt.Sprintf("CONDOR_CONFIG=%s", condorConfig),
-	}
-	output, err := cmd.CombinedOutput()
-	log.Infof("condor_rm output for job %s:\n%s\n", s.CondorID, output)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to execute %s", cl.condorRm)
-	}
-	return string(output), err
-}
-
 // handleEvents accepts an amqp message, acks it, and delegates handling it to
 // another function.
 func (cl *CondorLauncher) routeEvents(delivery amqp.Delivery) {
