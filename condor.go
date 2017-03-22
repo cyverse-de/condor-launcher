@@ -81,6 +81,8 @@ type CondorLauncher struct {
 	cfg          *viper.Viper
 	client       Messenger
 	fs           fsys
+	v            VaultOperator
+	cubbyMount   string // the path to where the cubbyhole backend is rooted in Vault
 	condorSubmit string //path to the condor_submit executable
 	condorRm     string // path to the condor_rm executable
 }
@@ -96,12 +98,46 @@ func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm strin
 	}
 }
 
+func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
+	childToken, err := cl.v.ChildToken(cl.cfg.GetInt("vault.num_uses"))
+	if err != nil {
+		return "", err
+	}
+	cfgData := &IRODSConfig{
+		IRODSHost: cl.cfg.GetString("irods.host"),
+		IRODSPort: cl.cfg.GetString("irods.port"),
+		IRODSUser: cl.cfg.GetString("irods.user"),
+		IRODSPass: cl.cfg.GetString("irods.pass"),
+		IRODSBase: cl.cfg.GetString("irods.base"),
+		IRODSResc: cl.cfg.GetString("irods.resc"),
+		IRODSZone: cl.cfg.GetString("irods.zone"),
+	}
+	fileContent, err := GenerateFile(IRODSConfigTemplate, cfgData)
+	if err != nil {
+		return "", err
+	}
+	if err = cl.v.StoreConfig(
+		childToken,
+		cl.cfg.GetString("vault.irods.mount"),
+		s.ID,
+		fileContent.Bytes(),
+	); err != nil {
+		return "", err
+	}
+	return childToken, nil
+}
+
 func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) (string, error) {
+	childToken, err := cl.storeConfig(s)
+	if err != nil {
+		return "", err
+	}
+	cl.cfg.Set("vault.child_token", childToken)
 	sdir := s.CondorLogDirectory()
 	if path.Base(sdir) != "logs" {
 		sdir = path.Join(sdir, "logs")
 	}
-	err := os.MkdirAll(sdir, 0755)
+	err = os.MkdirAll(sdir, 0755)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to create the directory %s", sdir)
 	}
@@ -131,20 +167,6 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 			data:        s,
 			skipTmpl:    true,
 			jsonify:     true,
-			permissions: 0644,
-		},
-		{
-			filename: path.Join(sdir, "irods-config"),
-			template: IRODSConfigTemplate,
-			data: &IRODSConfig{
-				IRODSHost: cl.cfg.GetString("irods.host"),
-				IRODSPort: cl.cfg.GetString("irods.port"),
-				IRODSUser: cl.cfg.GetString("irods.user"),
-				IRODSPass: cl.cfg.GetString("irods.pass"),
-				IRODSBase: cl.cfg.GetString("irods.base"),
-				IRODSResc: cl.cfg.GetString("irods.resc"),
-				IRODSZone: cl.cfg.GetString("irods.zone"),
-			},
 			permissions: 0644,
 		},
 	}
@@ -434,6 +456,16 @@ func main() {
 		messaging.LaunchesKey,
 		launcher.handleLaunchRequests(condorPath, condorConfig),
 	)
+	launcher.v, err = VaultInit(
+		cfg.GetString("vault.token"),
+		cfg.GetString("vault.url"),
+	)
+	if err != nil {
+		log.Fatalf("%+v\n", err)
+	}
+	if err = launcher.v.MountCubbyhole(cfg.GetString("vault.irods.mount")); err != nil {
+		log.Fatalf("%+v\n", err)
+	}
 	spin := make(chan int)
 	<-spin
 }

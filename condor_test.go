@@ -55,6 +55,9 @@ func inittestsFile(t *testing.T, filename string) *model.Job {
 	cfg.Set("condor.request_disk", "0")
 	cfg.Set("condor.path_env_var", "/path/to/path")
 	cfg.Set("condor.condor_config", "/condor/config")
+	cfg.Set("vault.child_token", "token")
+	cfg.Set("vault.irods.mount", "irods")
+	cfg.Set("vault.num_uses", 3)
 	data, err := JSONData(filename)
 	if err != nil {
 		t.Error(err)
@@ -221,6 +224,20 @@ queue
 	}
 }
 
+type VaultTester struct{}
+
+func (v *VaultTester) MountCubbyhole(mountPoint string) error {
+	return nil
+}
+
+func (v *VaultTester) ChildToken(numUses int) (string, error) {
+	return "", nil
+}
+
+func (v *VaultTester) StoreConfig(token, mountPoint, jobID string, config []byte) error {
+	return nil
+}
+
 func TestLaunch(t *testing.T) {
 	inittests(t)
 	csPath, err := exec.LookPath("condor_submit")
@@ -246,6 +263,10 @@ func TestLaunch(t *testing.T) {
 	}
 	filesystem := newtsys()
 	cl := New(cfg, nil, filesystem, csPath, crPath)
+	cl.v = &VaultTester{}
+	if err != nil {
+		t.Error(err)
+	}
 	data, err := JSONData("test/test_submission.json")
 	if err != nil {
 		t.Error(err)
