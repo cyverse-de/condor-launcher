@@ -118,7 +118,7 @@ func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
 	}
 	if err = cl.v.StoreConfig(
 		childToken,
-		cl.cfg.GetString("vault.irods.mount"),
+		cl.cfg.GetString("vault.irods.mount_path"),
 		s.ID,
 		fileContent.Bytes(),
 	); err != nil {
@@ -463,7 +463,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
-	if err = launcher.v.MountCubbyhole(cfg.GetString("vault.irods.mount")); err != nil {
+	if err = launcher.v.MountCubbyhole(cfg.GetString("vault.irods.mount_path")); err != nil {
 		log.Fatalf("%+v\n", err)
 	}
 	spin := make(chan int)

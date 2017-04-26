@@ -56,7 +56,7 @@ func inittestsFile(t *testing.T, filename string) *model.Job {
 	cfg.Set("condor.path_env_var", "/path/to/path")
 	cfg.Set("condor.condor_config", "/condor/config")
 	cfg.Set("vault.child_token.token", "token")
-	cfg.Set("vault.irods.mount", "irods")
+	cfg.Set("vault.irods.mount_path", "irods")
 	cfg.Set("vault.num_uses", 3)
 	data, err := JSONData(filename)
 	if err != nil {
