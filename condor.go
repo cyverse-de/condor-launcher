@@ -99,10 +99,17 @@ func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm strin
 }
 
 func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
-	childToken, err := cl.v.ChildToken(cl.cfg.GetInt("vault.irods.token.use_limit"))
-	if err != nil {
-		return "", err
+	uselimit := cl.cfg.GetInt("vault.irods.child_token.use_limit")
+	if uselimit == 0 {
+		return "", errors.New("vault.irods.child_token.use_limit was empty or set to 0")
 	}
+
+	childToken, err := cl.v.ChildToken(uselimit)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to generate child token")
+	}
+	log.Infof("generated a child token for job %s", s.InvocationID)
+
 	cfgData := &IRODSConfig{
 		IRODSHost: cl.cfg.GetString("irods.host"),
 		IRODSPort: cl.cfg.GetString("irods.port"),
@@ -116,31 +123,47 @@ func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	log.Infof("generated the irods config for job %s", s.InvocationID)
+
+	// TODO: Remove the creation of the irods-config file once porklock has
+	// support for reading the iRODS config from vault.
+	sdir := s.CondorLogDirectory()
+	if path.Base(sdir) != "logs" {
+		sdir = path.Join(sdir, "logs")
+	}
+	fname := path.Join(sdir, "irods-config")
+	err = ioutil.WriteFile(fname, fileContent.Bytes(), 0644)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to write to file %s", fname)
+	}
+
 	if err = cl.v.StoreConfig(
 		childToken,
 		cl.cfg.GetString("vault.irods.mount_path"),
-		s.ID,
+		s.InvocationID,
 		fileContent.Bytes(),
 	); err != nil {
 		return "", err
 	}
+	log.Infof("stored the irods config for job %s in vault", s.InvocationID)
+
 	return childToken, nil
 }
 
 func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) (string, error) {
+	sdir := s.CondorLogDirectory()
+	if path.Base(sdir) != "logs" {
+		sdir = path.Join(sdir, "logs")
+	}
+	err := os.MkdirAll(sdir, 0755)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to create the directory %s", sdir)
+	}
 	childToken, err := cl.storeConfig(s)
 	if err != nil {
 		return "", err
 	}
 	cl.cfg.Set("vault.child_token.token", childToken)
-	sdir := s.CondorLogDirectory()
-	if path.Base(sdir) != "logs" {
-		sdir = path.Join(sdir, "logs")
-	}
-	err = os.MkdirAll(sdir, 0755)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to create the directory %s", sdir)
-	}
 	subfiles := []struct {
 		filename    string
 		filecontent []byte
