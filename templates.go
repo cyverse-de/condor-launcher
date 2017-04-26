@@ -61,7 +61,7 @@ porklock:
 condor:
     filter_files: "{{.GetString "condor.filter_files"}}"
 vault:
-    token: "{{.GetString "vault.child_token"}}"`
+    token: "{{.GetString "vault.child_token.token"}}"`
 
 // IRODSConfigTemplateText is the text of the template for porklock's iRODS
 // config file.

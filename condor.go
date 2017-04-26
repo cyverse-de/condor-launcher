@@ -99,7 +99,7 @@ func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm strin
 }
 
 func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
-	childToken, err := cl.v.ChildToken(cl.cfg.GetInt("vault.num_uses"))
+	childToken, err := cl.v.ChildToken(cl.cfg.GetInt("vault.irods.token.use_limit"))
 	if err != nil {
 		return "", err
 	}
@@ -132,7 +132,7 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 	if err != nil {
 		return "", err
 	}
-	cl.cfg.Set("vault.child_token", childToken)
+	cl.cfg.Set("vault.child_token.token", childToken)
 	sdir := s.CondorLogDirectory()
 	if path.Base(sdir) != "logs" {
 		sdir = path.Join(sdir, "logs")
