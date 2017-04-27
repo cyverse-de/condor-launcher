@@ -70,7 +70,7 @@ func (v *Vaulter) ChildToken(numUses int) (string, error) {
 	ta := v.api.Token()
 	secret, err := v.api.CreateToken(ta, opts)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	if secret.Auth == nil {
 		return "", errors.New("auth field was nil")
