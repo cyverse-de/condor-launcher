@@ -81,6 +81,8 @@ type CondorLauncher struct {
 	cfg          *viper.Viper
 	client       Messenger
 	fs           fsys
+	v            VaultOperator
+	cubbyMount   string // the path to where the cubbyhole backend is rooted in Vault
 	condorSubmit string //path to the condor_submit executable
 	condorRm     string // path to the condor_rm executable
 }
@@ -96,6 +98,58 @@ func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm strin
 	}
 }
 
+func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
+	uselimit := cl.cfg.GetInt("vault.irods.child_token.use_limit")
+	if uselimit == 0 {
+		return "", errors.New("vault.irods.child_token.use_limit was empty or set to 0")
+	}
+
+	childToken, err := cl.v.ChildToken(uselimit)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to generate child token")
+	}
+	log.Infof("generated a child token for job %s", s.InvocationID)
+
+	cfgData := &IRODSConfig{
+		IRODSHost: cl.cfg.GetString("irods.host"),
+		IRODSPort: cl.cfg.GetString("irods.port"),
+		IRODSUser: cl.cfg.GetString("irods.user"),
+		IRODSPass: cl.cfg.GetString("irods.pass"),
+		IRODSBase: cl.cfg.GetString("irods.base"),
+		IRODSResc: cl.cfg.GetString("irods.resc"),
+		IRODSZone: cl.cfg.GetString("irods.zone"),
+	}
+	fileContent, err := GenerateFile(IRODSConfigTemplate, cfgData)
+	if err != nil {
+		return "", err
+	}
+	log.Infof("generated the irods config for job %s", s.InvocationID)
+
+	// TODO: Remove the creation of the irods-config file once porklock has
+	// support for reading the iRODS config from vault.
+	sdir := s.CondorLogDirectory()
+	if path.Base(sdir) != "logs" {
+		sdir = path.Join(sdir, "logs")
+	}
+	fname := path.Join(sdir, "irods-config")
+	err = ioutil.WriteFile(fname, fileContent.Bytes(), 0644)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to write to file %s", fname)
+	}
+
+	if err = cl.v.StoreConfig(
+		childToken,
+		cl.cfg.GetString("vault.irods.mount_path"),
+		s.InvocationID,
+		fileContent.Bytes(),
+	); err != nil {
+		return "", err
+	}
+	log.Infof("stored the irods config for job %s in vault", s.InvocationID)
+
+	return childToken, nil
+}
+
 func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) (string, error) {
 	sdir := s.CondorLogDirectory()
 	if path.Base(sdir) != "logs" {
@@ -105,6 +159,12 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to create the directory %s", sdir)
 	}
+	childToken, err := cl.storeConfig(s)
+	if err != nil {
+		return "", err
+	}
+	cfgCopy := CopyConfig(cl.cfg)
+	cfgCopy.Set("vault.child_token.token", childToken)
 	subfiles := []struct {
 		filename    string
 		filecontent []byte
@@ -123,7 +183,7 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 		{
 			filename:    path.Join(sdir, "config"),
 			template:    JobConfigTemplate,
-			data:        cl.cfg,
+			data:        cfgCopy,
 			permissions: 0644,
 		},
 		{
@@ -131,20 +191,6 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 			data:        s,
 			skipTmpl:    true,
 			jsonify:     true,
-			permissions: 0644,
-		},
-		{
-			filename: path.Join(sdir, "irods-config"),
-			template: IRODSConfigTemplate,
-			data: &IRODSConfig{
-				IRODSHost: cl.cfg.GetString("irods.host"),
-				IRODSPort: cl.cfg.GetString("irods.port"),
-				IRODSUser: cl.cfg.GetString("irods.user"),
-				IRODSPass: cl.cfg.GetString("irods.pass"),
-				IRODSBase: cl.cfg.GetString("irods.base"),
-				IRODSResc: cl.cfg.GetString("irods.resc"),
-				IRODSZone: cl.cfg.GetString("irods.zone"),
-			},
 			permissions: 0644,
 		},
 	}
@@ -434,6 +480,16 @@ func main() {
 		messaging.LaunchesKey,
 		launcher.handleLaunchRequests(condorPath, condorConfig),
 	)
+	launcher.v, err = VaultInit(
+		cfg.GetString("vault.token"),
+		cfg.GetString("vault.url"),
+	)
+	if err != nil {
+		log.Fatalf("%+v\n", err)
+	}
+	if err = launcher.v.MountCubbyhole(cfg.GetString("vault.irods.mount_path")); err != nil {
+		log.Fatalf("%+v\n", err)
+	}
 	spin := make(chan int)
 	<-spin
 }
