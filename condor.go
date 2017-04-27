@@ -163,7 +163,8 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 	if err != nil {
 		return "", err
 	}
-	cl.cfg.Set("vault.child_token.token", childToken)
+	cfgCopy := CopyConfig(cl.cfg)
+	cfgCopy.Set("vault.child_token.token", childToken)
 	subfiles := []struct {
 		filename    string
 		filecontent []byte
@@ -182,7 +183,7 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 		{
 			filename:    path.Join(sdir, "config"),
 			template:    JobConfigTemplate,
-			data:        cl.cfg,
+			data:        cfgCopy,
 			permissions: 0644,
 		},
 		{
