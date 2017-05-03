@@ -125,18 +125,6 @@ func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
 	}
 	log.Infof("generated the irods config for job %s", s.InvocationID)
 
-	// TODO: Remove the creation of the irods-config file once porklock has
-	// support for reading the iRODS config from vault.
-	sdir := s.CondorLogDirectory()
-	if path.Base(sdir) != "logs" {
-		sdir = path.Join(sdir, "logs")
-	}
-	fname := path.Join(sdir, "irods-config")
-	err = ioutil.WriteFile(fname, fileContent.Bytes(), 0644)
-	if err != nil {
-		return "", errors.Wrapf(err, "failed to write to file %s", fname)
-	}
-
 	if err = cl.v.StoreConfig(
 		childToken,
 		cl.cfg.GetString("vault.irods.mount_path"),
