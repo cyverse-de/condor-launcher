@@ -99,7 +99,7 @@ func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm strin
 }
 
 func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
-	uselimit := cl.cfg.GetInt("vault.irods.child_token.use_limit")
+	uselimit := len(s.Inputs()) + 1
 	if uselimit == 0 {
 		return "", errors.New("vault.irods.child_token.use_limit was empty or set to 0")
 	}
