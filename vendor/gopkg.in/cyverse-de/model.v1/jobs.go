@@ -279,7 +279,7 @@ func (s *Job) Outputs() []StepOutput {
 func (s *Job) ExcludeArguments() []string {
 	var paths []string
 	for _, input := range s.Inputs() {
-		if !input.Retain {
+		if !input.Retain && input.Value != "" {
 			paths = append(paths, input.Source())
 		}
 	}

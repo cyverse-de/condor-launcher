@@ -91,7 +91,7 @@ func (o *StepOutput) Source() string {
 	value := o.Name
 	if o.Multiplicity == "collection" {
 		if !path.IsAbs(value) {
-			value = fmt.Sprintf("$(pwd)/%s", value)
+			value = fmt.Sprintf("/de-app-work/%s", value)
 		}
 		if !strings.HasSuffix(value, "/") {
 			value = fmt.Sprintf("%s/", value)

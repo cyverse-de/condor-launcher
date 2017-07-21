@@ -6,16 +6,22 @@ package messaging
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"strconv"
 	"time"
 
-	"github.com/cyverse-de/logcabin"
-	"github.com/cyverse-de/model"
+	"gopkg.in/cyverse-de/model.v1"
 
 	"github.com/streadway/amqp"
 )
+
+type Logger interface {
+	Print(args ...interface{})
+	Printf(format string, args ...interface{})
+	Println(args ...interface{})
+}
 
 //Command is tells the receiver of a JobRequest which action to perform
 type Command int
@@ -27,6 +33,18 @@ type JobState string
 type StatusCode int
 
 var (
+	// Info level logger. Can be set by other packages. Defaults to writing to
+	// os.Stdout.
+	Info Logger = log.New(os.Stdout, "", log.Lshortfile)
+
+	// Warn level logger. Can be set by other packages. Defaults to writing to
+	// os.Stderr.
+	Warn Logger = log.New(os.Stderr, "", log.Lshortfile)
+
+	// Error level logger. Can be set by other packages. Default to writing to
+	// os.Stderr.
+	Error Logger = log.New(os.Stderr, "", log.Lshortfile)
+
 	//LaunchCommand is the string used in LaunchCo
 	LaunchCommand = "LAUNCH"
 
@@ -284,19 +302,19 @@ func NewClient(uri string, reconnect bool) (*Client, error) {
 	randomizer := rand.New(rand.NewSource(time.Now().UnixNano()))
 	c.uri = uri
 	c.Reconnect = reconnect
-	logcabin.Info.Println("Attempting AMQP connection...")
+	Info.Println("Attempting AMQP connection...")
 	var connection *amqp.Connection
 	var err error
 	if c.Reconnect {
 		for {
 			connection, err = amqp.Dial(c.uri)
 			if err != nil {
-				logcabin.Error.Print(err)
+				Error.Print(err)
 				waitFor := randomizer.Intn(10)
-				logcabin.Info.Printf("Re-attempting connection in %d seconds", waitFor)
+				Info.Printf("Re-attempting connection in %d seconds", waitFor)
 				time.Sleep(time.Duration(waitFor) * time.Second)
 			} else {
-				logcabin.Info.Println("Successfully connected to the AMQP broker")
+				Info.Println("Successfully connected to the AMQP broker")
 				break
 			}
 		}
@@ -305,7 +323,7 @@ func NewClient(uri string, reconnect bool) (*Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		logcabin.Info.Println("Successfully connected to the AMQP broker")
+		Info.Println("Successfully connected to the AMQP broker")
 	}
 	c.connection = connection
 	c.consumersChan = make(chan consumeradder)
@@ -330,13 +348,13 @@ func (c *Client) Listen() {
 	for {
 		select {
 		case cs := <-c.consumersChan:
-			logcabin.Info.Println("A new consumer is being added")
+			Info.Println("A new consumer is being added")
 			c.initconsumer(&cs.consumer)
 			consumers = append(consumers, &cs.consumer)
-			logcabin.Info.Println("Done adding a new consumer")
+			Info.Println("Done adding a new consumer")
 			cs.latch <- 1
 		case err := <-c.errors:
-			logcabin.Error.Printf("An error in the connection to the AMQP broker occurred:\n%s", err)
+			Error.Printf("An error in the connection to the AMQP broker occurred:\n%s", err)
 			if c.Reconnect {
 				c, _ = NewClient(c.uri, c.Reconnect)
 				c.consumers = consumers

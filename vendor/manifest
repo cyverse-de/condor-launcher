@@ -52,19 +52,12 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/cyverse-de/messaging",
-			"repository": "https://github.com/cyverse-de/messaging",
-			"vcs": "git",
-			"revision": "2828ee9ec47568737abab1dd8d181f9ff0570a12",
-			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/cyverse-de/model",
+			"importpath": "github.com/cyverse-de/model/submitfile",
 			"repository": "https://github.com/cyverse-de/model",
 			"vcs": "git",
-			"revision": "3db869a80cfd3556ef59986999a997f8b68d319d",
+			"revision": "bf8453314372d00979c0cdf7da069515acdbb6be",
 			"branch": "master",
+			"path": "/submitfile",
 			"notests": true
 		},
 		{
@@ -646,6 +639,22 @@
 			"vcs": "git",
 			"revision": "4f90aeace3a26ad7021961c297b22c42160c7b25",
 			"branch": "v1",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/cyverse-de/messaging.v2",
+			"repository": "https://gopkg.in/cyverse-de/messaging.v2",
+			"vcs": "git",
+			"revision": "79fe2cf2fd16a8eb61e785e22fb4a8301bce5068",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/cyverse-de/model.v1",
+			"repository": "https://gopkg.in/cyverse-de/model.v1",
+			"vcs": "git",
+			"revision": "bf8453314372d00979c0cdf7da069515acdbb6be",
+			"branch": "master",
 			"notests": true
 		},
 		{

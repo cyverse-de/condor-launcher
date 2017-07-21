@@ -29,11 +29,11 @@ import (
 	"github.com/cyverse-de/configurate"
 	"github.com/cyverse-de/go-events/ping"
 	"github.com/cyverse-de/logcabin"
-	"github.com/cyverse-de/messaging"
-	"github.com/cyverse-de/model"
 	"github.com/cyverse-de/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/cyverse-de/messaging.v2"
+	"gopkg.in/cyverse-de/model.v1"
 
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
