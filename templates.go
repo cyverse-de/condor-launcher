@@ -27,9 +27,9 @@ requirements = (HAS_HOST_MOUNTS == True){{ end }}
 arguments = --config config --job job
 output = script-output.log
 error = script-error.log
-log = condor.log{{if .Group}}
-accounting_group = {{.Group}}
-accounting_group_user = {{.Submitter}}{{end}}
+log = condor.log
+accounting_group = {{if .Group}}{{.Group}}{{else}}de{{end}}
+accounting_group_user = {{.Submitter}}
 request_disk = {{.RequestDisk}}
 +IpcUuid = "{{.InvocationID}}"
 +IpcJobId = "generated_script"
