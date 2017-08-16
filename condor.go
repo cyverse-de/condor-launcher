@@ -388,16 +388,20 @@ func main() {
 		err         error
 	)
 	flag.Parse()
+
 	logcabin.Init("condor-launcher", "condor-launcher")
+
 	if *showVersion {
 		version.AppVersion()
 		os.Exit(0)
 	}
+
 	if *cfgPath == "" {
 		fmt.Println("Error: --config must be set.")
 		flag.PrintDefaults()
 		os.Exit(-1)
 	}
+
 	csPath, err := exec.LookPath("condor_submit")
 	if err != nil {
 		log.Fatal(errors.Wrapf(err, "failed to find condor_submit in $PATH"))
@@ -408,6 +412,7 @@ func main() {
 			log.Fatal(errors.Wrapf(err, "failed to get the absolute path to %s", csPath))
 		}
 	}
+
 	crPath, err := exec.LookPath("condor_rm")
 	log.Infof("condor_rm found at %s", crPath)
 	if err != nil {
@@ -419,24 +424,30 @@ func main() {
 			log.Fatal(errors.Wrapf(err, "failed to get the absolute path for %s", crPath))
 		}
 	}
+
 	cfg, err := configurate.InitDefaults(*cfgPath, configurate.JobServicesDefaults)
 	if err != nil {
 		log.Fatalf("%+v\n", errors.Wrap(err, "failed to initialize configuration defaults"))
 	}
 	log.Infoln("Done reading config.")
+
 	uri := cfg.GetString("amqp.uri")
 	exchangeName := cfg.GetString("amqp.exchange.name")
 	exchangeType := cfg.GetString("amqp.exchange.type")
+
 	client, err := messaging.NewClient(uri, true)
 	if err != nil {
 		log.Fatalf("%+v\n", errors.Wrap(err, "failed to create new AMQP client"))
 	}
 	defer client.Close()
+
 	launcher := New(cfg, client, &osys{}, csPath, crPath)
 	launcher.client.SetupPublishing(exchangeName)
 	go launcher.client.Listen()
+
 	condorPath := cfg.GetString("condor.path_env_var")
 	condorConfig := cfg.GetString("condor.condor_config")
+
 	ticker, err := startHeldTicker(
 		client,
 		condorPath,
@@ -446,6 +457,7 @@ func main() {
 		log.Fatalf("%+v\n", err)
 	}
 	log.Infof("Started up the held state ticker: %#v", ticker)
+
 	launcher.client.AddConsumer(
 		exchangeName,
 		exchangeType,
@@ -453,6 +465,7 @@ func main() {
 		messaging.StopRequestKey("*"),
 		launcher.stopHandler(condorPath, condorConfig),
 	)
+
 	launcher.client.AddConsumer(
 		exchangeName,
 		exchangeType,
@@ -460,6 +473,7 @@ func main() {
 		"events.condor-launcher.*",
 		launcher.routeEvents,
 	)
+
 	// Accept and handle messages sent out with the jobs.launches routing key.
 	launcher.client.AddConsumer(
 		exchangeName,
@@ -468,6 +482,7 @@ func main() {
 		messaging.LaunchesKey,
 		launcher.handleLaunchRequests(condorPath, condorConfig),
 	)
+
 	launcher.v, err = VaultInit(
 		cfg.GetString("vault.token"),
 		cfg.GetString("vault.url"),
@@ -475,9 +490,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("%+v\n", err)
 	}
+
 	if err = launcher.v.MountCubbyhole(cfg.GetString("vault.irods.mount_path")); err != nil {
 		log.Fatalf("%+v\n", err)
 	}
+
 	spin := make(chan int)
 	<-spin
 }
