@@ -642,10 +642,10 @@
 			"notests": true
 		},
 		{
-			"importpath": "gopkg.in/cyverse-de/messaging.v2",
-			"repository": "https://gopkg.in/cyverse-de/messaging.v2",
+			"importpath": "gopkg.in/cyverse-de/messaging.v3",
+			"repository": "https://gopkg.in/cyverse-de/messaging.v3",
 			"vcs": "git",
-			"revision": "79fe2cf2fd16a8eb61e785e22fb4a8301bce5068",
+			"revision": "ef0657dbfdaa47c4dd14abac3185448b26cba91d",
 			"branch": "master",
 			"notests": true
 		},

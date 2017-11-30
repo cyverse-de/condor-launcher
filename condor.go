@@ -32,7 +32,7 @@ import (
 	"github.com/cyverse-de/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/cyverse-de/messaging.v2"
+	"gopkg.in/cyverse-de/messaging.v3"
 	"gopkg.in/cyverse-de/model.v1"
 
 	"github.com/spf13/viper"
@@ -68,7 +68,7 @@ const pongKey = "events.condor-launcher.pong"
 // Messenger defines an interface for handling AMQP operations. This is the
 // subset of functionality needed by job-status-recorder.
 type Messenger interface {
-	AddConsumer(string, string, string, string, messaging.MessageHandler)
+	AddConsumer(string, string, string, string, messaging.MessageHandler, int)
 	Close()
 	Listen()
 	Publish(string, []byte) error
@@ -473,6 +473,7 @@ func main() {
 		"condor-launcher-stops",
 		messaging.StopRequestKey("*"),
 		launcher.stopHandler(condorPath, condorConfig),
+		32,
 	)
 
 	launcher.client.AddConsumer(
@@ -481,6 +482,7 @@ func main() {
 		"condor_launcher_events",
 		"events.condor-launcher.*",
 		launcher.routeEvents,
+		0,
 	)
 
 	// Accept and handle messages sent out with the jobs.launches routing key.
@@ -490,6 +492,7 @@ func main() {
 		"condor_launches",
 		messaging.LaunchesKey,
 		launcher.handleLaunchRequests(condorPath, condorConfig),
+		0,
 	)
 
 	spin := make(chan int)
