@@ -287,25 +287,34 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d amqp.Delivery) {
 	return func(d amqp.Delivery) {
 		var (
+			redelivered    bool
+			allStopped     bool
 			condorQOutput  []byte
 			condorRMOutput []byte
 			invID          string
 			err            error
 		)
+
+		redelivered = d.Redelivered
+
 		stopRequest := &messaging.StopRequest{}
 		if err = json.Unmarshal(d.Body, stopRequest); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal the stop request body"))
+			d.Reject(!redelivered)
 			return
 		}
 		invID = stopRequest.InvocationID
 		log.Infoln("Running condor_q...")
 		if condorQOutput, err = ExecCondorQ(condorPath, condorConfig); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to exec condor_q"))
+			d.Reject(!redelivered)
 			return
 		}
 		log.Infoln("Done running condor_q")
 		entries := queueEntriesByInvocationID(condorQOutput, invID)
 		log.Infof("Number of entries for job %s is %d", invID, len(entries))
+
+		allStopped = true
 		for _, entry := range entries {
 			if entry.CondorID == "" {
 				continue
@@ -313,6 +322,7 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 			condorID := entry.CondorID
 			log.Infof("Running 'condor_rm %s'", condorID)
 			if condorRMOutput, err = ExecCondorRm(condorID, condorPath, condorConfig); err != nil {
+				allStopped = false
 				log.Errorf("%+v\n", errors.Wrapf(err, "failed to run 'condor_rm %s'", condorID))
 				continue
 			}
@@ -324,12 +334,16 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 				Message: "Job was killed",
 			}
 			if err = cl.client.PublishJobUpdate(update); err != nil {
-				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a failed job"))
+				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a stopped job"))
 			}
 			log.Infof("Output of 'condor_rm %s':\n%s", condorID, condorRMOutput)
 		}
 
-		d.Ack(false)
+		if allStopped {
+			d.Ack(false)
+		} else {
+			d.Reject(!redelivered)
+		}
 	}
 }
 
