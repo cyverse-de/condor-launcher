@@ -100,9 +100,6 @@ func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm strin
 
 func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
 	uselimit := len(s.Inputs()) + 2 // 2 comes from 1 for writing, one for the output job.
-	if uselimit == 0 {
-		return "", errors.New("vault.irods.child_token.use_limit was empty or set to 0")
-	}
 
 	childToken, err := cl.v.ChildToken(uselimit)
 	if err != nil {
@@ -458,6 +455,18 @@ func main() {
 	}
 	log.Infof("Started up the held state ticker: %#v", ticker)
 
+	launcher.v, err = VaultInit(
+		cfg.GetString("vault.token"),
+		cfg.GetString("vault.url"),
+	)
+	if err != nil {
+		log.Fatalf("%+v\n", err)
+	}
+
+	if err = launcher.v.MountCubbyhole(cfg.GetString("vault.irods.mount_path")); err != nil {
+		log.Fatalf("%+v\n", err)
+	}
+
 	launcher.client.AddConsumer(
 		exchangeName,
 		exchangeType,
@@ -482,18 +491,6 @@ func main() {
 		messaging.LaunchesKey,
 		launcher.handleLaunchRequests(condorPath, condorConfig),
 	)
-
-	launcher.v, err = VaultInit(
-		cfg.GetString("vault.token"),
-		cfg.GetString("vault.url"),
-	)
-	if err != nil {
-		log.Fatalf("%+v\n", err)
-	}
-
-	if err = launcher.v.MountCubbyhole(cfg.GetString("vault.irods.mount_path")); err != nil {
-		log.Fatalf("%+v\n", err)
-	}
 
 	spin := make(chan int)
 	<-spin
