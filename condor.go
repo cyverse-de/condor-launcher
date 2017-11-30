@@ -292,7 +292,6 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 			invID          string
 			err            error
 		)
-		d.Ack(false)
 		stopRequest := &messaging.StopRequest{}
 		if err = json.Unmarshal(d.Body, stopRequest); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal the stop request body"))
@@ -329,6 +328,8 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 			}
 			log.Infof("Output of 'condor_rm %s':\n%s", condorID, condorRMOutput)
 		}
+
+		d.Ack(false)
 	}
 }
 
