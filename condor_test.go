@@ -13,7 +13,7 @@ import (
 
 	"github.com/cyverse-de/configurate"
 	"github.com/streadway/amqp"
-	"gopkg.in/cyverse-de/messaging.v2"
+	"gopkg.in/cyverse-de/messaging.v3"
 	"gopkg.in/cyverse-de/model.v1"
 
 	"github.com/spf13/viper"
@@ -317,7 +317,7 @@ type MockMessenger struct {
 func (m *MockMessenger) Close()  {}
 func (m *MockMessenger) Listen() {}
 
-func (m *MockMessenger) AddConsumer(exchange, exchangeType, queue, key string, handler messaging.MessageHandler) {
+func (m *MockMessenger) AddConsumer(exchange, exchangeType, queue, key string, handler messaging.MessageHandler, prefetchCount int) {
 	m.consumers = append(m.consumers, MockConsumer{
 		exchange:     exchange,
 		exchangeType: exchangeType,

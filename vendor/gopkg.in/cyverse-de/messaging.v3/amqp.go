@@ -272,6 +272,7 @@ type consumer struct {
 	handler         MessageHandler
 	queueDurable    bool
 	queueAutoDelete bool
+	prefetchCount   int
 }
 
 type consumeradder struct {
@@ -382,7 +383,7 @@ func (c *Client) Close() {
 // each time the client is set up. Note that this just adds the consumers to a
 // list, it doesn't actually start handling messages yet. You need to call
 // Listen() for that.
-func (c *Client) AddConsumerMulti(exchange, exchangeType, queue string, keys []string, handler MessageHandler) {
+func (c *Client) AddConsumerMulti(exchange, exchangeType, queue string, keys []string, handler MessageHandler, prefetchCount int) {
 	cs := consumer{
 		exchange:        exchange,
 		exchangeType:    exchangeType,
@@ -391,6 +392,7 @@ func (c *Client) AddConsumerMulti(exchange, exchangeType, queue string, keys []s
 		handler:         handler,
 		queueDurable:    true,
 		queueAutoDelete: false,
+		prefetchCount:   prefetchCount,
 	}
 	adder := consumeradder{
 		consumer: cs,
@@ -401,8 +403,8 @@ func (c *Client) AddConsumerMulti(exchange, exchangeType, queue string, keys []s
 }
 
 // AddConsumer adds a consumer with only one binding, which is usually what you need
-func (c *Client) AddConsumer(exchange, exchangeType, queue, key string, handler MessageHandler) {
-	c.AddConsumerMulti(exchange, exchangeType, queue, []string{key}, handler)
+func (c *Client) AddConsumer(exchange, exchangeType, queue, key string, handler MessageHandler, prefetchCount int) {
+	c.AddConsumerMulti(exchange, exchangeType, queue, []string{key}, handler, prefetchCount)
 }
 
 // AddDeletableConsumer adds a consumer to the list of consumers that need to be
@@ -489,6 +491,14 @@ func (c *Client) initconsumer(cs *consumer) error {
 	channel, err := c.connection.Channel()
 	if err != nil {
 		return err
+	}
+
+	if cs.prefetchCount > 0 {
+		err = channel.Qos(
+			cs.prefetchCount, // prefetchCount
+			0,                // prefetchSize
+			false,            // global: false => count applied separately to each new consumer on the channel
+		)
 	}
 	err = channel.ExchangeDeclare(
 		cs.exchange,     //name

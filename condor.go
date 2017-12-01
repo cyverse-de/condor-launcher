@@ -32,7 +32,7 @@ import (
 	"github.com/cyverse-de/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/cyverse-de/messaging.v2"
+	"gopkg.in/cyverse-de/messaging.v3"
 	"gopkg.in/cyverse-de/model.v1"
 
 	"github.com/spf13/viper"
@@ -68,7 +68,7 @@ const pongKey = "events.condor-launcher.pong"
 // Messenger defines an interface for handling AMQP operations. This is the
 // subset of functionality needed by job-status-recorder.
 type Messenger interface {
-	AddConsumer(string, string, string, string, messaging.MessageHandler)
+	AddConsumer(string, string, string, string, messaging.MessageHandler, int)
 	Close()
 	Listen()
 	Publish(string, []byte) error
@@ -100,9 +100,6 @@ func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm strin
 
 func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
 	uselimit := len(s.Inputs()) + 2 // 2 comes from 1 for writing, one for the output job.
-	if uselimit == 0 {
-		return "", errors.New("vault.irods.child_token.use_limit was empty or set to 0")
-	}
 
 	childToken, err := cl.v.ChildToken(uselimit)
 	if err != nil {
@@ -290,26 +287,34 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d amqp.Delivery) {
 	return func(d amqp.Delivery) {
 		var (
+			redelivered    bool
+			allStopped     bool
 			condorQOutput  []byte
 			condorRMOutput []byte
 			invID          string
 			err            error
 		)
-		d.Ack(false)
+
+		redelivered = d.Redelivered
+
 		stopRequest := &messaging.StopRequest{}
 		if err = json.Unmarshal(d.Body, stopRequest); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal the stop request body"))
+			d.Reject(!redelivered)
 			return
 		}
 		invID = stopRequest.InvocationID
 		log.Infoln("Running condor_q...")
 		if condorQOutput, err = ExecCondorQ(condorPath, condorConfig); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to exec condor_q"))
+			d.Reject(!redelivered)
 			return
 		}
 		log.Infoln("Done running condor_q")
 		entries := queueEntriesByInvocationID(condorQOutput, invID)
 		log.Infof("Number of entries for job %s is %d", invID, len(entries))
+
+		allStopped = true
 		for _, entry := range entries {
 			if entry.CondorID == "" {
 				continue
@@ -317,6 +322,7 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 			condorID := entry.CondorID
 			log.Infof("Running 'condor_rm %s'", condorID)
 			if condorRMOutput, err = ExecCondorRm(condorID, condorPath, condorConfig); err != nil {
+				allStopped = false
 				log.Errorf("%+v\n", errors.Wrapf(err, "failed to run 'condor_rm %s'", condorID))
 				continue
 			}
@@ -328,9 +334,15 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 				Message: "Job was killed",
 			}
 			if err = cl.client.PublishJobUpdate(update); err != nil {
-				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a failed job"))
+				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a stopped job"))
 			}
 			log.Infof("Output of 'condor_rm %s':\n%s", condorID, condorRMOutput)
+		}
+
+		if allStopped {
+			d.Ack(false)
+		} else {
+			d.Reject(!redelivered)
 		}
 	}
 }
@@ -458,31 +470,6 @@ func main() {
 	}
 	log.Infof("Started up the held state ticker: %#v", ticker)
 
-	launcher.client.AddConsumer(
-		exchangeName,
-		exchangeType,
-		"condor-launcher-stops",
-		messaging.StopRequestKey("*"),
-		launcher.stopHandler(condorPath, condorConfig),
-	)
-
-	launcher.client.AddConsumer(
-		exchangeName,
-		exchangeType,
-		"condor_launcher_events",
-		"events.condor-launcher.*",
-		launcher.routeEvents,
-	)
-
-	// Accept and handle messages sent out with the jobs.launches routing key.
-	launcher.client.AddConsumer(
-		exchangeName,
-		exchangeType,
-		"condor_launches",
-		messaging.LaunchesKey,
-		launcher.handleLaunchRequests(condorPath, condorConfig),
-	)
-
 	launcher.v, err = VaultInit(
 		cfg.GetString("vault.token"),
 		cfg.GetString("vault.url"),
@@ -494,6 +481,34 @@ func main() {
 	if err = launcher.v.MountCubbyhole(cfg.GetString("vault.irods.mount_path")); err != nil {
 		log.Fatalf("%+v\n", err)
 	}
+
+	launcher.client.AddConsumer(
+		exchangeName,
+		exchangeType,
+		"condor-launcher-stops",
+		messaging.StopRequestKey("*"),
+		launcher.stopHandler(condorPath, condorConfig),
+		32,
+	)
+
+	launcher.client.AddConsumer(
+		exchangeName,
+		exchangeType,
+		"condor_launcher_events",
+		"events.condor-launcher.*",
+		launcher.routeEvents,
+		0,
+	)
+
+	// Accept and handle messages sent out with the jobs.launches routing key.
+	launcher.client.AddConsumer(
+		exchangeName,
+		exchangeType,
+		"condor_launches",
+		messaging.LaunchesKey,
+		launcher.handleLaunchRequests(condorPath, condorConfig),
+		0,
+	)
 
 	spin := make(chan int)
 	<-spin
