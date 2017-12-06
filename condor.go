@@ -488,7 +488,7 @@ func main() {
 		"condor-launcher-stops",
 		messaging.StopRequestKey("*"),
 		launcher.stopHandler(condorPath, condorConfig),
-		32,
+		cfg.GetInt("amqp.prefetch.stops"),
 	)
 
 	launcher.client.AddConsumer(
@@ -497,7 +497,7 @@ func main() {
 		"condor_launcher_events",
 		"events.condor-launcher.*",
 		launcher.routeEvents,
-		0,
+		cfg.GetInt("amqp.prefetch.events"),
 	)
 
 	// Accept and handle messages sent out with the jobs.launches routing key.
@@ -507,7 +507,7 @@ func main() {
 		"condor_launches",
 		messaging.LaunchesKey,
 		launcher.handleLaunchRequests(condorPath, condorConfig),
-		0,
+		cfg.GetInt("amqp.prefetch.launches"),
 	)
 
 	spin := make(chan int)
