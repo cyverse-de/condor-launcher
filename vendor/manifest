@@ -653,7 +653,7 @@
 			"importpath": "gopkg.in/cyverse-de/model.v1",
 			"repository": "https://gopkg.in/cyverse-de/model.v1",
 			"vcs": "git",
-			"revision": "bf8453314372d00979c0cdf7da069515acdbb6be",
+			"revision": "3b06c9e9e248fcd8bcb1b660b3047908cb91c1ba",
 			"branch": "master",
 			"notests": true
 		},

@@ -49,6 +49,7 @@ type Container struct {
 	MinMemoryLimit int64          `json:"min_memory_limit"` // The minimum the container needs.
 	MinCPUCores    int            `json:"min_cpu_cores"`    // The minimum number of cores the container needs.
 	MinDiskSpace   int64          `json:"min_disk_space"`   // The minimum amount of disk space that the container needs.
+	PIDsLimit      int64          `json:"pids_limit"`
 	Image          ContainerImage `json:"image"`
 	EntryPoint     string         `json:"entrypoint"`
 	WorkingDir     string         `json:"working_directory"`
