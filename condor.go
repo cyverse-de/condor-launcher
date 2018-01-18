@@ -243,19 +243,23 @@ func (cl *CondorLauncher) routeEvents(delivery amqp.Delivery) {
 func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) func(d amqp.Delivery) {
 	return func(delivery amqp.Delivery) {
 		body := delivery.Body
-		if err := delivery.Ack(false); err != nil {
-			log.Error(errors.Wrap(err, "failed to ack amqp launch request delivery"))
-		}
 		req := messaging.JobRequest{}
 		err := json.Unmarshal(body, &req)
 		if err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal launch request json"))
 			log.Error(string(body[:]))
+
+			if err := delivery.Reject(!delivery.Redelivered); err != nil {
+				log.Error(errors.Wrap(err, "failed to Reject amqp Launch request delivery"))
+			}
+
 			return
 		}
+
 		if req.Job.RequestDisk == "" {
 			req.Job.RequestDisk = "0"
 		}
+
 		switch req.Command {
 		case messaging.Launch:
 			jobID, err := cl.launch(req.Job, condorPath, condorConfig)
@@ -269,6 +273,10 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 				if err != nil {
 					log.Errorf("%+v\n", errors.Wrap(err, "failed to publish launch failure job update"))
 				}
+
+				if err := delivery.Reject(!delivery.Redelivered); err != nil {
+					log.Error(errors.Wrap(err, "failed to Reject amqp Launch request delivery"))
+				}
 			} else {
 				log.Infof("Launched Condor ID %s", jobID)
 				err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
@@ -279,6 +287,14 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 				if err != nil {
 					log.Errorf("%+v\n", errors.Wrap(err, "failed to publish successful launch job update"))
 				}
+
+				if err := delivery.Ack(false); err != nil {
+					log.Error(errors.Wrap(err, "failed to ACK amqp Launch request delivery"))
+				}
+			}
+		default:
+			if err := delivery.Ack(false); err != nil {
+				log.Error(errors.Wrap(err, "failed to ACK amqp Launch request delivery"))
 			}
 		}
 	}
