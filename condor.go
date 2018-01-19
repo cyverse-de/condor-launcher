@@ -243,13 +243,15 @@ func (cl *CondorLauncher) routeEvents(delivery amqp.Delivery) {
 func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) func(d amqp.Delivery) {
 	return func(delivery amqp.Delivery) {
 		body := delivery.Body
+		requeueOnErr := !delivery.Redelivered
+
 		req := messaging.JobRequest{}
 		err := json.Unmarshal(body, &req)
 		if err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal launch request json"))
 			log.Error(string(body[:]))
 
-			if err := delivery.Reject(!delivery.Redelivered); err != nil {
+			if err := delivery.Reject(requeueOnErr); err != nil {
 				log.Error(errors.Wrap(err, "failed to Reject amqp Launch request delivery"))
 			}
 
@@ -265,16 +267,19 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 			jobID, err := cl.launch(req.Job, condorPath, condorConfig)
 			if err != nil {
 				log.Errorf("%+v\n", err)
-				err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
-					Job:     req.Job,
-					State:   messaging.FailedState,
-					Message: fmt.Sprintf("condor-launcher failed to launch job:\n %s", err),
-				})
-				if err != nil {
-					log.Errorf("%+v\n", errors.Wrap(err, "failed to publish launch failure job update"))
+
+				if !requeueOnErr {
+					err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
+						Job:     req.Job,
+						State:   messaging.FailedState,
+						Message: fmt.Sprintf("condor-launcher failed to launch job:\n %s", err),
+					})
+					if err != nil {
+						log.Errorf("%+v\n", errors.Wrap(err, "failed to publish launch failure job update"))
+					}
 				}
 
-				if err := delivery.Reject(!delivery.Redelivered); err != nil {
+				if err := delivery.Reject(requeueOnErr); err != nil {
 					log.Error(errors.Wrap(err, "failed to Reject amqp Launch request delivery"))
 				}
 			} else {
