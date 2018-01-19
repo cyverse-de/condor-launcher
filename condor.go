@@ -62,6 +62,18 @@ func init() {
 	}
 }
 
+func ackDelivery(delivery amqp.Delivery, logMsgOnErr string) {
+	if err := delivery.Ack(false); err != nil {
+		log.Error(errors.Wrap(err, logMsgOnErr))
+	}
+}
+
+func rejectDelivery(delivery amqp.Delivery, requeue bool, logMsgOnErr string) {
+	if err := delivery.Reject(requeue); err != nil {
+		log.Error(errors.Wrap(err, logMsgOnErr))
+	}
+}
+
 const pingKey = "events.condor-launcher.ping"
 const pongKey = "events.condor-launcher.pong"
 
@@ -220,9 +232,8 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 // handleEvents accepts an amqp message, acks it, and delegates handling it to
 // another function.
 func (cl *CondorLauncher) routeEvents(delivery amqp.Delivery) {
-	if err := delivery.Ack(false); err != nil {
-		log.Errorf("%+v\n", errors.Wrap(err, "failed to ack amqp event delivery"))
-	}
+	ackDelivery(delivery, "failed to ack amqp event delivery")
+
 	switch delivery.RoutingKey {
 	case pingKey:
 		log.Infoln("Received ping")
@@ -251,9 +262,7 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal launch request json"))
 			log.Error(string(body[:]))
 
-			if err := delivery.Reject(requeueOnErr); err != nil {
-				log.Error(errors.Wrap(err, "failed to Reject amqp Launch request delivery"))
-			}
+			rejectDelivery(delivery, requeueOnErr, "failed to Reject amqp Launch request delivery")
 
 			return
 		}
@@ -279,9 +288,7 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 					}
 				}
 
-				if err := delivery.Reject(requeueOnErr); err != nil {
-					log.Error(errors.Wrap(err, "failed to Reject amqp Launch request delivery"))
-				}
+				rejectDelivery(delivery, requeueOnErr, "failed to Reject amqp Launch request delivery")
 			} else {
 				log.Infof("Launched Condor ID %s", jobID)
 				err = cl.client.PublishJobUpdate(&messaging.UpdateMessage{
@@ -293,16 +300,11 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 					log.Errorf("%+v\n", errors.Wrap(err, "failed to publish successful launch job update"))
 				}
 
-				if err := delivery.Ack(false); err != nil {
-					log.Error(errors.Wrap(err, "failed to ACK amqp Launch request delivery"))
-				}
+				ackDelivery(delivery, "failed to ACK amqp Launch request delivery")
 			}
 		default:
 			log.Errorf("condor_launches message handler got unrecognized command: %+v\n", req.Command)
-
-			if err := delivery.Ack(false); err != nil {
-				log.Error(errors.Wrap(err, "failed to ACK amqp Launch request delivery"))
-			}
+			ackDelivery(delivery, "failed to ACK amqp Launch request delivery")
 		}
 	}
 }
@@ -310,7 +312,7 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d amqp.Delivery) {
 	return func(d amqp.Delivery) {
 		var (
-			redelivered    bool
+			requeueOnErr   bool
 			allStopped     bool
 			condorQOutput  []byte
 			condorRMOutput []byte
@@ -318,19 +320,19 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 			err            error
 		)
 
-		redelivered = d.Redelivered
+		requeueOnErr = !d.Redelivered
 
 		stopRequest := &messaging.StopRequest{}
 		if err = json.Unmarshal(d.Body, stopRequest); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to unmarshal the stop request body"))
-			d.Reject(!redelivered)
+			rejectDelivery(d, requeueOnErr, "failed to Reject StopRequest")
 			return
 		}
 		invID = stopRequest.InvocationID
 		log.Infoln("Running condor_q...")
 		if condorQOutput, err = ExecCondorQ(condorPath, condorConfig); err != nil {
 			log.Errorf("%+v\n", errors.Wrap(err, "failed to exec condor_q"))
-			d.Reject(!redelivered)
+			rejectDelivery(d, requeueOnErr, fmt.Sprintf("failed to Reject StopRequest for %s", invID))
 			return
 		}
 		log.Infoln("Done running condor_q")
@@ -363,9 +365,9 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 		}
 
 		if allStopped {
-			d.Ack(false)
+			ackDelivery(d, fmt.Sprintf("failed to ACK StopRequest for %s", invID))
 		} else {
-			d.Reject(!redelivered)
+			rejectDelivery(d, requeueOnErr, fmt.Sprintf("failed to Reject StopRequest for %s", invID))
 		}
 	}
 }
