@@ -298,6 +298,8 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 				}
 			}
 		default:
+			log.Errorf("condor_launches message handler got unrecognized command: %+v\n", req.Command)
+
 			if err := delivery.Ack(false); err != nil {
 				log.Error(errors.Wrap(err, "failed to ACK amqp Launch request delivery"))
 			}
