@@ -1,3 +1,3 @@
 #!/bin/sh
 
-echo "CondorID $1 was stopped"
+echo "$2 was stopped"

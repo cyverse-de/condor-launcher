@@ -313,8 +313,6 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 	return func(d amqp.Delivery) {
 		var (
 			requeueOnErr   bool
-			allStopped     bool
-			condorQOutput  []byte
 			condorRMOutput []byte
 			invID          string
 			err            error
@@ -328,29 +326,14 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 			rejectDelivery(d, requeueOnErr, "failed to Reject StopRequest")
 			return
 		}
-		invID = stopRequest.InvocationID
-		log.Infoln("Running condor_q...")
-		if condorQOutput, err = ExecCondorQ(condorPath, condorConfig); err != nil {
-			log.Errorf("%+v\n", errors.Wrap(err, "failed to exec condor_q"))
-			rejectDelivery(d, requeueOnErr, fmt.Sprintf("failed to Reject StopRequest for %s", invID))
-			return
-		}
-		log.Infoln("Done running condor_q")
-		entries := queueEntriesByInvocationID(condorQOutput, invID)
-		log.Infof("Number of entries for job %s is %d", invID, len(entries))
 
-		allStopped = true
-		for _, entry := range entries {
-			if entry.CondorID == "" {
-				continue
-			}
-			condorID := entry.CondorID
-			log.Infof("Running 'condor_rm %s'", condorID)
-			if condorRMOutput, err = ExecCondorRm(condorID, condorPath, condorConfig); err != nil {
-				allStopped = false
-				log.Errorf("%+v\n", errors.Wrapf(err, "failed to run 'condor_rm %s'", condorID))
-				continue
-			}
+		invID = stopRequest.InvocationID
+
+		log.Infof("Running condor_rm for %s", invID)
+		if condorRMOutput, err = ExecCondorRm(invID, condorPath, condorConfig); err != nil {
+			log.Errorf("%+v\n", errors.Wrapf(err, "failed to run 'condor_rm %s'", invID))
+			rejectDelivery(d, requeueOnErr, fmt.Sprintf("failed to Reject StopRequest for %s", invID))
+		} else {
 			fauxJob := model.New(cl.cfg)
 			fauxJob.InvocationID = invID
 			update := &messaging.UpdateMessage{
@@ -361,13 +344,9 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 			if err = cl.client.PublishJobUpdate(update); err != nil {
 				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a stopped job"))
 			}
-			log.Infof("Output of 'condor_rm %s':\n%s", condorID, condorRMOutput)
-		}
+			log.Infof("condor_rm output for job %s:\n%s", invID, condorRMOutput)
 
-		if allStopped {
 			ackDelivery(d, fmt.Sprintf("failed to ACK StopRequest for %s", invID))
-		} else {
-			rejectDelivery(d, requeueOnErr, fmt.Sprintf("failed to Reject StopRequest for %s", invID))
 		}
 	}
 }
