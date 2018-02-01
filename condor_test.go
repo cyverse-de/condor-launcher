@@ -316,6 +316,7 @@ type MockMessenger struct {
 
 func (m *MockMessenger) Close()  {}
 func (m *MockMessenger) Listen() {}
+func (m *MockMessenger) DeleteQueue(name string) error {return nil}
 
 func (m *MockMessenger) AddConsumer(exchange, exchangeType, queue, key string, handler messaging.MessageHandler, prefetchCount int) {
 	m.consumers = append(m.consumers, MockConsumer{

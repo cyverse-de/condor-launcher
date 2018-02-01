@@ -86,6 +86,7 @@ type Messenger interface {
 	Publish(string, []byte) error
 	SetupPublishing(string) error
 	PublishJobUpdate(*messaging.UpdateMessage) error
+	DeleteQueue(name string) error
 }
 
 // CondorLauncher contains the condor-launcher application state.
@@ -347,6 +348,8 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 			log.Infof("condor_rm output for job %s:\n%s", invID, condorRMOutput)
 
 			ackDelivery(d, fmt.Sprintf("failed to ACK StopRequest for %s", invID))
+
+			cl.client.DeleteQueue(messaging.StopQueueName(invID))
 		}
 	}
 }
