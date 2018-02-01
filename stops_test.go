@@ -55,7 +55,7 @@ BlockReadKbytes = 0
 BytesSent = 103469.0
 JobFinishedHookDone = 1437604709
 NumShadowStarts = 1
-JobStatus = 4
+JobStatus = 5
 JobCurrentStartDate = 1437604662
 TerminationPending = true
 MachineAttrSlotWeight0 = 3
@@ -179,7 +179,7 @@ BlockReadKbytes = 0
 BytesSent = 106927.0
 JobFinishedHookDone = 1437600186
 NumShadowStarts = 1
-JobStatus = 4
+JobStatus = 5
 JobCurrentStartDate = 1437599749
 TerminationPending = true
 MachineAttrSlotWeight0 = 3
@@ -301,7 +301,7 @@ BlockReadKbytes = 0
 BytesSent = 99709.0
 JobFinishedHookDone = 1437600183
 NumShadowStarts = 1
-JobStatus = 4
+JobStatus = 5
 JobCurrentStartDate = 1437599789
 TerminationPending = true
 MachineAttrSlotWeight0 = 3
@@ -417,44 +417,34 @@ OrigMaxHosts = 1
 RecentBlockReads = 0`)
 )
 
-func TestCondorID(t *testing.T) {
-	expected := "2"
-	invID := "63c5523d-d8a5-49bc-addc-99a73566cd89"
-	actual := queueEntriesByInvocationID(listing, invID)
-	found := false
+func isInvocationIDHeld(condorQListing []byte, invocationID string) bool {
+	actual := heldQueueEntries(condorQListing)
 	for _, entry := range actual {
-		if entry.CondorID == expected {
-			found = true
+		if entry.InvocationID == invocationID {
+			return entry.IsHeld
 		}
 	}
+
+	return false
+}
+
+func TestCondorID(t *testing.T) {
+	invID := "63c5523d-d8a5-49bc-addc-99a73566cd89"
+	found := isInvocationIDHeld(listing, invID)
 	if !found {
-		t.Errorf("The expected CondorID of %s was not found", expected)
+		t.Errorf("The expected InvocationID of %s was not in the Held state", invID)
 	}
 
 	invID = "b788569f-6948-4586-b5bd-5ea096986331"
-	expected = "1"
-	actual = queueEntriesByInvocationID(listing, invID)
-	found = false
-	for _, entry := range actual {
-		if entry.CondorID == expected {
-			found = true
-		}
-	}
+	found = isInvocationIDHeld(listing, invID)
 	if !found {
-		t.Errorf("The expected CondorID of %s was not found", expected)
+		t.Errorf("The expected InvocationID of %s was not in the Held state", invID)
 	}
 
 	invID = "eca67a7c-e745-4e98-b892-67a9948bc2cb"
-	expected = "3"
-	actual = queueEntriesByInvocationID(listing, invID)
-	found = false
-	for _, entry := range actual {
-		if entry.CondorID == expected {
-			found = true
-		}
-	}
+	found = isInvocationIDHeld(listing, invID)
 	if !found {
-		t.Errorf("The expected CondorID of %s was not found", expected)
+		t.Errorf("The expected InvocationID of %s was not in the Held state", invID)
 	}
 }
 
@@ -464,43 +454,23 @@ func TestExecCondorQ(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
 	invID := "63c5523d-d8a5-49bc-addc-99a73566cd89"
-	actual := queueEntriesByInvocationID(output, invID)
-	expected := "2"
-	found := false
-	for _, entries := range actual {
-		if entries.CondorID == expected {
-			found = true
-		}
-	}
+	found := isInvocationIDHeld(output, invID)
 	if !found {
-		t.Errorf("The expected CondorID of %s was not found", expected)
+		t.Errorf("The expected InvocationID of %s was not in the Held state", invID)
 	}
 
 	invID = "b788569f-6948-4586-b5bd-5ea096986331"
-	expected = "1"
-	actual = queueEntriesByInvocationID(output, invID)
-	found = false
-	for _, entry := range actual {
-		if entry.CondorID == expected {
-			found = true
-		}
-	}
+	found = isInvocationIDHeld(output, invID)
 	if !found {
-		t.Errorf("The expected CondorID of %s was not found", expected)
+		t.Errorf("The expected InvocationID of %s was not in the Held state", invID)
 	}
 
 	invID = "eca67a7c-e745-4e98-b892-67a9948bc2cb"
-	expected = "3"
-	actual = queueEntriesByInvocationID(output, invID)
-	found = false
-	for _, entry := range actual {
-		if entry.CondorID == expected {
-			found = true
-		}
-	}
+	found = isInvocationIDHeld(output, invID)
 	if !found {
-		t.Errorf("The expected CondorID of %s was not found", expected)
+		t.Errorf("The expected InvocationID of %s was not in the Held state", invID)
 	}
 }
 
@@ -510,7 +480,7 @@ func TestExecCondorRm(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	expected := []byte("CondorID foo was stopped\n")
+	expected := []byte("IpcUuid =?= \"foo\" was stopped\n")
 	if !reflect.DeepEqual(actual, expected) {
 		t.Errorf("ExecCondorRm returned '%s' instead of '%s'", actual, expected)
 	}

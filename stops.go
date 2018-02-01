@@ -38,9 +38,9 @@ func ExecCondorQ(condorPath, condorConfig string) ([]byte, error) {
 	return output, nil
 }
 
-// ExecCondorRm runs condor_rm, passing it the condor ID. Returns the output
-// of the command and passibly an error.
-func ExecCondorRm(condorID string, condorPath, condorConfig string) ([]byte, error) {
+// ExecCondorRm runs condor_rm with an IpcUuid constraint for the given invocationID.
+// Returns the output of the command and possibly an error.
+func ExecCondorRm(invocationID, condorPath, condorConfig string) ([]byte, error) {
 	var (
 		output []byte
 		err    error
@@ -56,15 +56,17 @@ func ExecCondorRm(condorID string, condorPath, condorConfig string) ([]byte, err
 			return output, errors.Wrapf(err, "failed to get the absolute path of %s", crPath)
 		}
 	}
-	cmd := exec.Command(crPath, condorID)
+
+	// condor_rm -constraint 'IpcUuid =?= "<uuid>"'
+	constraintIpcUuid := fmt.Sprintf(`IpcUuid =?= "%s"`, invocationID)
+	cmd := exec.Command(crPath, "-constraint", constraintIpcUuid)
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", condorPath),
 		fmt.Sprintf("CONDOR_CONFIG=%s", condorConfig),
 	}
 	output, err = cmd.CombinedOutput()
-	log.Infof("condor_rm output for job %s:\n%s\n", condorID, output)
 	if err != nil {
-		return output, errors.Wrapf(err, "failed to get the output of '%s %s'", crPath, condorID)
+		return output, errors.Wrapf(err, "failed to get the output of '%s %s %s'", crPath, "-constraint", constraintIpcUuid)
 	}
 	return output, nil
 }
@@ -116,21 +118,6 @@ func queueEntries(output []byte) []queueEntry {
 			IsHeld:       bytes.Equal(statusID, []byte("5")),
 		}
 		retval = append(retval, newEntry)
-	}
-	return retval
-}
-
-// queueEntriesByInvocationID returns a list of queueEntries for the given
-// invocation ID, which is stored in the "IpcUuid" field of the condor_q output.
-// This function does not call condor_q, it should be passed the output of the
-// condor_q command.
-func queueEntriesByInvocationID(output []byte, invID string) []queueEntry {
-	var retval []queueEntry
-	entries := queueEntries(output)
-	for _, entry := range entries {
-		if entry.InvocationID == invID {
-			retval = append(retval, entry)
-		}
 	}
 	return retval
 }
