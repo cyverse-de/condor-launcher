@@ -358,20 +358,20 @@ func killHeldJobs(client *messaging.Client, condorPath, condorConfig string) {
 	var (
 		err         error
 		cmdOutput   []byte
-		heldEntries []queueEntry
+		heldEntries []string
 	)
 	log.Infoln("Looking for jobs in the held state...")
-	if cmdOutput, err = ExecCondorQ(condorPath, condorConfig); err != nil {
+	if cmdOutput, err = ExecCondorQHeldIDs(condorPath, condorConfig); err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "error running condor_q"))
 		return
 	}
-	heldEntries = heldQueueEntries(cmdOutput)
+	heldEntries = heldQueueInvocationIDs(cmdOutput)
 	log.Infof("There are %d jobs in the held state", len(heldEntries))
-	for _, entry := range heldEntries {
-		if entry.InvocationID != "" {
-			log.Infof("Sending stop request for invocation id %s", entry.InvocationID)
+	for _, invocationID := range heldEntries {
+		if invocationID != "" {
+			log.Infof("Sending stop request for invocation id %s", invocationID)
 			if err = client.SendStopRequest(
-				entry.InvocationID,
+				invocationID,
 				"admin",
 				"Job was in held state",
 			); err != nil {

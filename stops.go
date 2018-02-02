@@ -6,12 +6,15 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 )
 
-// ExecCondorQ runs the condor_q -long command and returns its output.
-func ExecCondorQ(condorPath, condorConfig string) ([]byte, error) {
+// ExecCondorQHeldIDs runs the
+// `condor_q -constraint 'JobStatus =?= 5' -format "%s\n" IpcUuid`
+// command and returns its output.
+func ExecCondorQHeldIDs(condorPath, condorConfig string) ([]byte, error) {
 	var (
 		output []byte
 		err    error
@@ -26,14 +29,25 @@ func ExecCondorQ(condorPath, condorConfig string) ([]byte, error) {
 			return output, errors.Wrapf(err, "failed to get the absolute path of %s", csPath)
 		}
 	}
-	cmd := exec.Command(csPath, "-long")
+
+	cmdArgs := []string{
+		"-constraint",
+		"JobStatus =?= 5",
+		"-format",
+		"%s\\n",
+		"IpcUuid"}
+
+	cmd := exec.Command(csPath, cmdArgs...)
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", condorPath),
 		fmt.Sprintf("CONDOR_CONFIG=%s", condorConfig),
 	}
 	output, err = cmd.CombinedOutput()
 	if err != nil {
-		return output, errors.Wrapf(err, "failed to get the output of the command '%s %s'", csPath, "-long")
+		return output, errors.Wrapf(err,
+			"failed to get the output of the command '%s %s'",
+			csPath,
+			strings.Join(cmdArgs, " "))
 	}
 	return output, nil
 }
@@ -71,64 +85,16 @@ func ExecCondorRm(invocationID, condorPath, condorConfig string) ([]byte, error)
 	return output, nil
 }
 
-type queueEntry struct {
-	CondorID     string
-	InvocationID string
-	IsHeld       bool
-}
+func heldQueueInvocationIDs(condorQFormattedOutput []byte) []string {
+	var retval []string
 
-var (
-	condorIDKey  = []byte("ClusterId")
-	statusKey    = []byte("JobStatus")
-	newLineBytes = []byte("\n")
-	equalBytes   = []byte(" = ")
-	ipcUUIDBytes = []byte("IpcUuid")
-)
-
-func queueEntries(output []byte) []queueEntry {
-	var (
-		retval   []queueEntry
-		condorID []byte
-		jobID    []byte
-		statusID []byte
-	)
-	chunks := bytes.Split(output, []byte("\n\n"))
-	for _, chunk := range chunks {
-		lines := bytes.Split(chunk, newLineBytes)
-		for _, line := range lines {
-			if bytes.Contains(line, equalBytes) {
-				lineChunks := bytes.Split(line, equalBytes)
-				if len(lineChunks) >= 2 {
-					key := lineChunks[0]
-					value := lineChunks[1]
-					switch {
-					case bytes.Equal(key, condorIDKey):
-						condorID = bytes.TrimSpace(value)
-					case bytes.Equal(key, ipcUUIDBytes):
-						jobID = bytes.TrimSpace(value)
-					case bytes.Equal(key, statusKey):
-						statusID = bytes.TrimSpace(value)
-					}
-				}
-			}
-		}
-		newEntry := queueEntry{
-			CondorID:     string(condorID),
-			InvocationID: string(bytes.Trim(jobID, "\" ")),
-			IsHeld:       bytes.Equal(statusID, []byte("5")),
-		}
-		retval = append(retval, newEntry)
-	}
-	return retval
-}
-
-func heldQueueEntries(output []byte) []queueEntry {
-	var retval []queueEntry
-	entries := queueEntries(output)
-	for _, entry := range entries {
-		if entry.IsHeld {
-			retval = append(retval, entry)
+	lines := bytes.Split(condorQFormattedOutput, []byte("\n"))
+	for _, line := range lines {
+		invocationID := bytes.TrimSpace(line)
+		if len(invocationID) > 0 {
+			retval = append(retval, string(invocationID))
 		}
 	}
+
 	return retval
 }

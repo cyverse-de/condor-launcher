@@ -1,372 +1,54 @@
 #!/bin/sh
 
 echo '
-RecentBlockReadKbytes = 0
-IpcJobId = "generated_script"
-BlockWrites = 0
-BlockWriteKbytes = 0
-BlockReads = 0
-BlockReadKbytes = 0
-BytesSent = 103469.0
-JobFinishedHookDone = 1437604709
-NumShadowStarts = 1
-JobStatus = 5
-JobCurrentStartDate = 1437604662
-TerminationPending = true
-MachineAttrSlotWeight0 = 3
-LastJobLeaseRenewal = 1437604708
-LastMatchTime = 1437604662
-LastRemoteHost = "slot1@shadowcat.iplantcollaborative.org"
-MemoryUsage = ( ( ResidentSetSize + 1023 ) / 1024 )
-IpcExe = "wc_wrapper.sh"
-IpcUuid = "eca67a7c-e745-4e98-b892-67a9948bc2cb"
-NumCkpts = 0
-ClusterId = 3
-CurrentTime = time()
-PeriodicRelease = false
-WantCheckpoint = false
-Arguments = "iplant.sh"
-RemoteWallClockTime = 47.0
-ImageSize_RAW = 194760
-LeaveJobInQueue = false
-BufferBlockSize = 32768
-ExitCode = 0
-CompletionDate = 1437604709
-User = "condor@iplantcollaborative.org"
-RemoteSysCpu = 0.0
-ExecutableSize = 1000
-LocalUserCpu = 0.0
-TransferInput = "iplant.sh,irods-config,iplant.cmd"
-RemoteUserCpu = 0.0
-NiceUser = false
-JobRunCount = 1
-CumulativeSlotTime = 141.0
-TransferInputSizeMB = 0
-CondorPlatform = "$CondorPlatform: X86_64-RedHat_7.0 $"
-Environment = ""
-BufferSize = 524288
-Owner = "condor"
-JobNotification = 0
-BytesRecvd = 963523.0
-RequestMemory = ifthenelse(MemoryUsage =!= undefined,MemoryUsage,( ImageSize + 1023 ) / 1024)
-MaxHosts = 1
-UserLog = "/tmp/sriram/Word_Count_analysis1-2015-07-22-15-37-34.705/logs/condor.log"
-IpcUsername = "sriram"
-Out = "script-output.log"
-MinHosts = 1
-Requirements = ( TARGET.Arch == "X86_64" ) && ( TARGET.OpSys == "LINUX" ) && ( TARGET.Memory >= RequestMemory ) && ( TARGET.HasFileTransfer )
-SpooledOutputFiles = "de-transfer-trigger.log"
-RequestCpus = 1
-AutoClusterAttrs = "JobUniverse,LastCheckpointPlatform,NumCkpts,IpcExe,MachineLastMatchTime,ImageSize,MemoryUsage,RequestMemory,ResidentSetSize,Requirements,Rank,NiceUser,ConcurrencyLimits"
-JobUniverse = 5
-ExitBySignal = false
-JobPrio = 0
-NumJobMatches = 1
-RootDir = "/"
-GlobalJobId = "rocinante.iplantcollaborative.org#3.0#1437604654"
-CurrentHosts = 0
-JobStartDate = 1437604662
-CoreSize = 0
-OnExitHold = false
-LocalSysCpu = 0.0
-Iwd = "/tmp/sriram/Word_Count_analysis1-2015-07-22-15-37-34.705/logs"
-PeriodicHold = false
-ProcId = 0
-CommittedSuspensionTime = 0
-StatsLifetimeStarter = 45
-ImageSize = 200000
-CondorVersion = "$CondorVersion: 8.2.8 Apr 07 2015 BuildID: UW_development $"
-Err = "script-error.log"
-PeriodicRemove = false
-ConcurrencyLimits = "sriram"
-TransferOutput = "logs/de-transfer-trigger.log"
-StreamErr = false
-DiskUsage_RAW = 1115
-OnExitRemove = true
-DiskUsage = 1250
-In = "/dev/null"
-TargetType = "Machine"
-WhenToTransferOutput = "ON_EXIT_OR_EVICT"
-ResidentSetSize = 2250
-StreamOut = false
-WantRemoteIO = true
-CommittedSlotTime = 141.0
-TotalSuspensions = 0
-ExecutableSize_RAW = 938
-LastSuspensionTime = 0
-CommittedTime = 47
-IpcExePath = "/usr/local3/bin/wc_tool-1.00"
-Cmd = "/bin/bash"
-NumJobStarts = 1
-EnteredCurrentStatus = 1437604709
-JobLeaseDuration = 1200
-QDate = 1437604654
-WantRemoteSyscalls = false
-MachineAttrCpus0 = 3
-ShouldTransferFiles = "YES"
-ExitStatus = 0
-AutoClusterId = 5
-Rank = mips
-MyType = "Job"
-CumulativeSuspensionTime = 0
-NumSystemHolds = 0
-NumRestarts = 0
-RecentBlockWrites = 0
-NumCkpts_RAW = 0
-LastPublicClaimId = "<150.135.78.112:63306>#1437583342#12#..."
-RecentStatsLifetimeStarter = 37
-TransferIn = false
-RecentBlockWriteKbytes = 0
-JobCurrentStartExecutingDate = 1437604663
-LastJobStatus = 2
-StartdPrincipal = "unauthenticated@unmapped/150.135.78.112"
-ResidentSetSize_RAW = 2188
-RequestDisk = 0
-OrigMaxHosts = 1
-RecentBlockReads = 0
+63c5523d-d8a5-49bc-addc-99a73566cd89
+b788569f-6948-4586-b5bd-5ea096986331
+eca67a7c-e745-4e98-b892-67a9948bc2cb
 
-RecentBlockReadKbytes = 0
-IpcJobId = "generated_script"
-BlockWrites = 0
-BlockWriteKbytes = 0
-BlockReads = 0
-BlockReadKbytes = 0
-BytesSent = 106927.0
-JobFinishedHookDone = 1437600186
-NumShadowStarts = 1
-JobStatus = 5
-JobCurrentStartDate = 1437599749
-TerminationPending = true
-MachineAttrSlotWeight0 = 3
-LastJobLeaseRenewal = 1437600185
-LastMatchTime = 1437599749
-LastRemoteHost = "slot1@shadowcat.iplantcollaborative.org"
-MemoryUsage = ( ( ResidentSetSize + 1023 ) / 1024 )
-IpcExe = "wc_wrapper.sh"
-NumCkpts = 0
-ClusterId = 1
-CurrentTime = time()
-PeriodicRelease = false
-WantCheckpoint = false
-Arguments = "iplant.sh"
-RemoteWallClockTime = 437.0
-ImageSize_RAW = 196812
-LeaveJobInQueue = false
-BufferBlockSize = 32768
-ExitCode = 0
-CompletionDate = 1437600186
-User = "condor@iplantcollaborative.org"
-RemoteSysCpu = 0.0
-ExecutableSize = 1000
-LocalUserCpu = 0.0
-TransferInput = "iplant.sh,irods-config,iplant.cmd"
-RemoteUserCpu = 1.0
-NiceUser = false
-JobRunCount = 1
-CumulativeSlotTime = 1311.0
-TransferInputSizeMB = 0
-CondorPlatform = "$CondorPlatform: X86_64-RedHat_7.0 $"
-Environment = ""
-BufferSize = 524288
-Owner = "condor"
-JobNotification = 0
-BytesRecvd = 963569.0
-RequestMemory = ifthenelse(MemoryUsage =!= undefined,MemoryUsage,( ImageSize + 1023 ) / 1024)
-MaxHosts = 1
-UserLog = "/tmp/wregglej/Word_Count_analysis1-2015-07-22-14-15-39.005/logs/condor.log"
-IpcUsername = "wregglej"
-Out = "script-output.log"
-MinHosts = 1
-Requirements = ( TARGET.Arch == "X86_64" ) && ( TARGET.OpSys == "LINUX" ) && ( TARGET.Memory >= RequestMemory ) && ( TARGET.HasFileTransfer )
-SpooledOutputFiles = "de-transfer-trigger.log"
-RequestCpus = 1
-JobUniverse = 5
-ExitBySignal = false
-JobPrio = 0
-NumJobMatches = 1
-RootDir = "/"
-GlobalJobId = "rocinante.iplantcollaborative.org#1.0#1437599739"
-CurrentHosts = 0
-JobStartDate = 1437599749
-CoreSize = 0
-OnExitHold = false
-LocalSysCpu = 0.0
-Iwd = "/tmp/wregglej/Word_Count_analysis1-2015-07-22-14-15-39.005/logs"
-PeriodicHold = false
-ProcId = 0
-CommittedSuspensionTime = 0
-StatsLifetimeStarter = 436
-ImageSize = 200000
-CondorVersion = "$CondorVersion: 8.2.8 Apr 07 2015 BuildID: UW_development $"
-Err = "script-error.log"
-PeriodicRemove = false
-ConcurrencyLimits = "wregglej"
-TransferOutput = "logs/de-transfer-trigger.log"
-StreamErr = false
-DiskUsage_RAW = 1118
-OnExitRemove = true
-DiskUsage = 1250
-In = "/dev/null"
-TargetType = "Machine"
-WhenToTransferOutput = "ON_EXIT_OR_EVICT"
-ResidentSetSize = 10000
-StreamOut = false
-WantRemoteIO = true
-CommittedSlotTime = 1311.0
-TotalSuspensions = 0
-ExecutableSize_RAW = 938
-LastSuspensionTime = 0
-CommittedTime = 437
-IpcUuid = "b788569f-6948-4586-b5bd-5ea096986331"
-NumJobStarts = 1
-EnteredCurrentStatus = 1437600186
-JobLeaseDuration = 1200
-QDate = 1437599739
-WantRemoteSyscalls = false
-MachineAttrCpus0 = 3
-ShouldTransferFiles = "YES"
-ExitStatus = 0
-Rank = mips
-MyType = "Job"
-CumulativeSuspensionTime = 0
-NumSystemHolds = 0
-NumRestarts = 0
-RecentBlockWrites = 0
-NumCkpts_RAW = 0
-LastPublicClaimId = "<150.135.78.112:63306>#1437583342#1#..."
-RecentStatsLifetimeStarter = 427
-TransferIn = false
-RecentBlockWriteKbytes = 0
-JobCurrentStartExecutingDate = 1437599749
-LastJobStatus = 2
-StartdPrincipal = "unauthenticated@unmapped/150.135.78.112"
-ResidentSetSize_RAW = 9676
-RequestDisk = 0
-OrigMaxHosts = 1
-RecentBlockReads = 0
-Cmd = "/bin/bash"
-IpcExePath = "/usr/local3/bin/wc_tool-1.00"
+571722aa-f46c-40fd-a688-69068fb52ee1
+105fba2c-c9a5-4a89-8033-9d3b3e5c419f
+51d4cb60-e925-4229-a257-8d5b6feeedb8
+22c13517-4a2d-4874-92b3-5b5d03299d60
+316bc5ba-aaee-4922-a8c7-ea9479a65650
+1e0cc85e-6053-452c-b1a9-cedc0f12cf7b
+7ffa2752-e7bf-4eae-8ed5-b366aef7978e
+d9eaa702-14d5-439e-b01f-4ca3a39096ec
+57ff5e6b-5a4f-496b-9f66-eeadfbd03e86
+0af6c62a-3570-46de-9f27-9b6c430bd912
+0d607f70-ad65-4a8c-bfe3-1b0efb7a20e9
+10af43af-6f63-4305-8bad-e70ae208ec4c
+1fa4bea3-8f3e-472e-9981-3b1a5b0d425e
+30282173-70e5-4055-8621-a3a149db1829
+9b21c5c6-19b3-45cc-9e87-720d57032e71
+6a54a3bc-1a42-453d-9fa9-81300804f26f
+827624c9-1e1b-4783-ab7a-23e78c599cc3
+c6193b50-cdaa-48c8-aa69-3957431b05a2
+d0952a64-8d7c-4d2b-9046-6c91425e0671
 
-RecentBlockReadKbytes = 0
-IpcJobId = "generated_script"
-BlockWrites = 0
-BlockWriteKbytes = 0
-BlockReads = 0
-BlockReadKbytes = 0
-BytesSent = 99709.0
-JobFinishedHookDone = 1437600183
-NumShadowStarts = 1
-JobStatus = 5
-JobCurrentStartDate = 1437599789
-TerminationPending = true
-MachineAttrSlotWeight0 = 3
-LastJobLeaseRenewal = 1437600182
-LastMatchTime = 1437599789
-LastRemoteHost = "slot2@shadowcat.iplantcollaborative.org"
-MemoryUsage = ( ( ResidentSetSize + 1023 ) / 1024 )
-IpcExe = "wc_wrapper.sh"
-IpcUuid = "63c5523d-d8a5-49bc-addc-99a73566cd89"
-NumCkpts = 0
-ClusterId = 2
-CurrentTime = time()
-PeriodicRelease = false
-WantCheckpoint = false
-Arguments = "iplant.sh"
-RemoteWallClockTime = 394.0
-ImageSize_RAW = 196812
-LeaveJobInQueue = false
-BufferBlockSize = 32768
-ExitCode = 1
-CompletionDate = 1437600183
-User = "condor@iplantcollaborative.org"
-RemoteSysCpu = 0.0
-ExecutableSize = 1000
-LocalUserCpu = 0.0
-TransferInput = "iplant.sh,irods-config,iplant.cmd"
-RemoteUserCpu = 0.0
-NiceUser = false
-JobRunCount = 1
-CumulativeSlotTime = 1182.0
-TransferInputSizeMB = 0
-CondorPlatform = "$CondorPlatform: X86_64-RedHat_7.0 $"
-Environment = ""
-BufferSize = 524288
-Owner = "condor"
-JobNotification = 0
-BytesRecvd = 963523.0
-RequestMemory = ifthenelse(MemoryUsage =!= undefined,MemoryUsage,( ImageSize + 1023 ) / 1024)
-MaxHosts = 1
-UserLog = "/tmp/sriram/Word_Count_analysis1-2015-07-22-14-16-29.284/logs/condor.log"
-IpcUsername = "sriram"
-Out = "script-output.log"
-MinHosts = 1
-Requirements = ( TARGET.Arch == "X86_64" ) && ( TARGET.OpSys == "LINUX" ) && ( TARGET.Memory >= RequestMemory ) && ( TARGET.HasFileTransfer )
-SpooledOutputFiles = "de-transfer-trigger.log"
-RequestCpus = 1
-AutoClusterAttrs = "JobUniverse,LastCheckpointPlatform,NumCkpts,IpcExe,MachineLastMatchTime,ImageSize,MemoryUsage,RequestMemory,ResidentSetSize,Requirements,Rank,NiceUser,ConcurrencyLimits"
-JobUniverse = 5
-ExitBySignal = false
-JobPrio = 0
-NumJobMatches = 1
-RootDir = "/"
-GlobalJobId = "rocinante.iplantcollaborative.org#2.0#1437599789"
-CurrentHosts = 0
-JobStartDate = 1437599789
-CoreSize = 0
-OnExitHold = false
-LocalSysCpu = 0.0
-Iwd = "/tmp/sriram/Word_Count_analysis1-2015-07-22-14-16-29.284/logs"
-PeriodicHold = false
-ProcId = 0
-CommittedSuspensionTime = 0
-StatsLifetimeStarter = 393
-ImageSize = 200000
-CondorVersion = "$CondorVersion: 8.2.8 Apr 07 2015 BuildID: UW_development $"
-Err = "script-error.log"
-PeriodicRemove = false
-ConcurrencyLimits = "sriram"
-TransferOutput = "logs/de-transfer-trigger.log"
-StreamErr = false
-DiskUsage_RAW = 1107
-OnExitRemove = true
-DiskUsage = 1250
-In = "/dev/null"
-TargetType = "Machine"
-WhenToTransferOutput = "ON_EXIT_OR_EVICT"
-ResidentSetSize = 10000
-StreamOut = false
-WantRemoteIO = true
-CommittedSlotTime = 1182.0
-TotalSuspensions = 0
-ExecutableSize_RAW = 938
-LastSuspensionTime = 0
-CommittedTime = 394
-IpcExePath = "/usr/local3/bin/wc_tool-1.00"
-Cmd = "/bin/bash"
-NumJobStarts = 1
-EnteredCurrentStatus = 1437600183
-JobLeaseDuration = 1200
-QDate = 1437599789
-WantRemoteSyscalls = false
-MachineAttrCpus0 = 3
-ShouldTransferFiles = "YES"
-ExitStatus = 0
-AutoClusterId = 3
-Rank = mips
-MyType = "Job"
-CumulativeSuspensionTime = 0
-NumSystemHolds = 0
-NumRestarts = 0
-RecentBlockWrites = 0
-NumCkpts_RAW = 0
-LastPublicClaimId = "<150.135.78.112:63306>#1437583342#2#..."
-RecentStatsLifetimeStarter = 384
-TransferIn = false
-RecentBlockWriteKbytes = 0
-JobCurrentStartExecutingDate = 1437599789
-LastJobStatus = 2
-StartdPrincipal = "unauthenticated@unmapped/150.135.78.112"
-ResidentSetSize_RAW = 9488
-RequestDisk = 0
-OrigMaxHosts = 1
-RecentBlockReads = 0'
+4457ec2d-5203-4ab6-95e5-2831d998dd1f
+6e7d9735-1fc7-4626-b5d3-91993eae7a1b
+3c967e99-51ff-484d-a000-3ce3adf744ce
+8d64bc74-750a-4cd3-bbf3-2d9a4e56fcf0
+77ac1023-c6d1-403c-8088-04205a270c7a
+dc9f2455-da10-42c6-bc58-b7a963b46338
+74a17e36-ac52-4dde-9abb-e5a8dca0b2c6
+7446aa7b-16db-4b4f-ad8d-8d802b402aaa
+ee6cdfe9-bd90-460a-bb5f-b10b3e299b10
+a45770ad-cc7d-4fc8-8b1a-ffb75bd44e0e
+dd632e6c-50e7-4b81-bb07-9d2abe0a9b15
+f532df1e-591e-47f1-84e6-fdf670727040
+12febe03-ae83-48f2-b828-c2865fecf09e
+e802a7b5-13f2-462d-ac85-f9836a4fd575
+18f6b09f-63bd-4825-a34e-4767dee4f358
+4a039e5a-0335-45ee-880b-5495c92bfc9a
+6123e600-ec4f-4d29-b2c4-edd0af089b04
+ba30efdd-4207-4120-91dd-de5caed467ae
+9d20a879-6d33-43b4-b430-0c1cfaf5a7c4
+8f4002c0-d650-4252-943d-56287b6c6efe
+3c5c986e-1b69-4ff2-a470-0f677148240e
+f0ffb7ee-b7c6-4a07-814b-88d76b3cc3b8
+65ecca14-759e-41ee-b764-069ac0155df5
+36770cc9-d80b-405c-b9be-c5977ae3e83b
+4a4926a6-2a18-4b37-a361-581658a0f067
+15384749-bc5f-43ff-854e-b6495e0c6ee4
+2e8c0c9c-133a-4436-b1a4-3bb303ce7cd3'
