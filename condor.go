@@ -310,11 +310,39 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 	}
 }
 
+func (launcher *CondorLauncher) stopJob(invocationID, condorPath, condorConfig string) (error) {
+	var (
+		condorRMOutput []byte
+		err            error
+	)
+
+	log.Infof("Running condor_rm for %s", invocationID)
+	if condorRMOutput, err = ExecCondorRm(invocationID, condorPath, condorConfig); err != nil {
+		log.Errorf("%+v\n", errors.Wrapf(err, "failed to run 'condor_rm %s'", invocationID))
+		return err
+	}
+
+	fauxJob := model.New(launcher.cfg)
+	fauxJob.InvocationID = invocationID
+	update := &messaging.UpdateMessage{
+		Job:     fauxJob,
+		State:   messaging.FailedState,
+		Message: "Job was killed",
+	}
+	if err = launcher.client.PublishJobUpdate(update); err != nil {
+		log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a stopped job"))
+	}
+	log.Infof("condor_rm output for job %s:\n%s", invocationID, condorRMOutput)
+
+	launcher.client.DeleteQueue(messaging.StopQueueName(invocationID))
+
+	return nil
+}
+
 func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d amqp.Delivery) {
 	return func(d amqp.Delivery) {
 		var (
 			requeueOnErr   bool
-			condorRMOutput []byte
 			invID          string
 			err            error
 		)
@@ -330,51 +358,31 @@ func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d am
 
 		invID = stopRequest.InvocationID
 
-		log.Infof("Running condor_rm for %s", invID)
-		if condorRMOutput, err = ExecCondorRm(invID, condorPath, condorConfig); err != nil {
-			log.Errorf("%+v\n", errors.Wrapf(err, "failed to run 'condor_rm %s'", invID))
+		if err = cl.stopJob(invID, condorPath, condorConfig); err != nil {
 			rejectDelivery(d, requeueOnErr, fmt.Sprintf("failed to Reject StopRequest for %s", invID))
 		} else {
-			fauxJob := model.New(cl.cfg)
-			fauxJob.InvocationID = invID
-			update := &messaging.UpdateMessage{
-				Job:     fauxJob,
-				State:   messaging.FailedState,
-				Message: "Job was killed",
-			}
-			if err = cl.client.PublishJobUpdate(update); err != nil {
-				log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a stopped job"))
-			}
-			log.Infof("condor_rm output for job %s:\n%s", invID, condorRMOutput)
-
 			ackDelivery(d, fmt.Sprintf("failed to ACK StopRequest for %s", invID))
-
-			cl.client.DeleteQueue(messaging.StopQueueName(invID))
 		}
 	}
 }
 
-func killHeldJobs(client *messaging.Client, condorPath, condorConfig string) {
+func killHeldJobs(launcher *CondorLauncher, condorPath, condorConfig string) {
 	var (
 		err         error
 		cmdOutput   []byte
-		heldEntries []queueEntry
+		heldEntries []string
 	)
 	log.Infoln("Looking for jobs in the held state...")
-	if cmdOutput, err = ExecCondorQ(condorPath, condorConfig); err != nil {
+	if cmdOutput, err = ExecCondorQHeldIDs(condorPath, condorConfig); err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "error running condor_q"))
 		return
 	}
-	heldEntries = heldQueueEntries(cmdOutput)
+	heldEntries = heldQueueInvocationIDs(cmdOutput)
 	log.Infof("There are %d jobs in the held state", len(heldEntries))
-	for _, entry := range heldEntries {
-		if entry.InvocationID != "" {
-			log.Infof("Sending stop request for invocation id %s", entry.InvocationID)
-			if err = client.SendStopRequest(
-				entry.InvocationID,
-				"admin",
-				"Job was in held state",
-			); err != nil {
+	for _, invocationID := range heldEntries {
+		if invocationID != "" {
+			log.Infof("Sending stop request for invocation id %s", invocationID)
+			if err = launcher.stopJob(invocationID, condorPath, condorConfig); err != nil {
 				log.Errorf("%+v\n", errors.Wrap(err, "error sending stop request"))
 			}
 		}
@@ -383,20 +391,20 @@ func killHeldJobs(client *messaging.Client, condorPath, condorConfig string) {
 
 // startHeldTicker starts up the code that periodically fires and clean up held
 // jobs
-func startHeldTicker(client *messaging.Client, condorPath, condorConfig string) (*time.Ticker, error) {
+func startHeldTicker(launcher *CondorLauncher, condorPath, condorConfig string) (*time.Ticker, error) {
 	d, err := time.ParseDuration("30s")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse duration '30s'")
 	}
 	t := time.NewTicker(d)
-	go func(t *time.Ticker, client *messaging.Client) {
+	go func(t *time.Ticker, launcher *CondorLauncher) {
 		for {
 			select {
 			case <-t.C:
-				killHeldJobs(client, condorPath, condorConfig)
+				killHeldJobs(launcher, condorPath, condorConfig)
 			}
 		}
-	}(t, client)
+	}(t, launcher)
 	return t, nil
 }
 
@@ -467,16 +475,6 @@ func main() {
 	condorPath := cfg.GetString("condor.path_env_var")
 	condorConfig := cfg.GetString("condor.condor_config")
 
-	ticker, err := startHeldTicker(
-		client,
-		condorPath,
-		condorConfig,
-	)
-	if err != nil {
-		log.Fatalf("%+v\n", err)
-	}
-	log.Infof("Started up the held state ticker: %#v", ticker)
-
 	launcher.v, err = VaultInit(
 		cfg.GetString("vault.token"),
 		cfg.GetString("vault.url"),
@@ -488,6 +486,16 @@ func main() {
 	if err = launcher.v.MountCubbyhole(cfg.GetString("vault.irods.mount_path")); err != nil {
 		log.Fatalf("%+v\n", err)
 	}
+
+	ticker, err := startHeldTicker(
+		launcher,
+		condorPath,
+		condorConfig,
+	)
+	if err != nil {
+		log.Fatalf("%+v\n", err)
+	}
+	log.Infof("Started up the held state ticker: %#v", ticker)
 
 	launcher.client.AddConsumer(
 		exchangeName,
