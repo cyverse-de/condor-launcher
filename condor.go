@@ -22,7 +22,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"path/filepath"
 	"text/template"
 	"time"
 
@@ -310,7 +309,7 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 	}
 }
 
-func (launcher *CondorLauncher) stopJob(invocationID, condorPath, condorConfig string) (error) {
+func (launcher *CondorLauncher) stopJob(invocationID, condorPath, condorConfig string) error {
 	var (
 		condorRMOutput []byte
 		err            error
@@ -342,9 +341,9 @@ func (launcher *CondorLauncher) stopJob(invocationID, condorPath, condorConfig s
 func (cl *CondorLauncher) stopHandler(condorPath, condorConfig string) func(d amqp.Delivery) {
 	return func(d amqp.Delivery) {
 		var (
-			requeueOnErr   bool
-			invID          string
-			err            error
+			requeueOnErr bool
+			invID        string
+			err          error
 		)
 
 		requeueOnErr = !d.Redelivered
@@ -429,28 +428,8 @@ func main() {
 		os.Exit(-1)
 	}
 
-	csPath, err := exec.LookPath("condor_submit")
-	if err != nil {
-		log.Fatal(errors.Wrapf(err, "failed to find condor_submit in $PATH"))
-	}
-	if !path.IsAbs(csPath) {
-		csPath, err = filepath.Abs(csPath)
-		if err != nil {
-			log.Fatal(errors.Wrapf(err, "failed to get the absolute path to %s", csPath))
-		}
-	}
-
-	crPath, err := exec.LookPath("condor_rm")
-	log.Infof("condor_rm found at %s", crPath)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to find condor_rm on the $PATH"))
-	}
-	if !path.IsAbs(crPath) {
-		crPath, err = filepath.Abs(crPath)
-		if err != nil {
-			log.Fatal(errors.Wrapf(err, "failed to get the absolute path for %s", crPath))
-		}
-	}
+	csPath := findExecPath("condor_submit")
+	crPath := findExecPath("condor_rm")
 
 	cfg, err := configurate.InitDefaults(*cfgPath, configurate.JobServicesDefaults)
 	if err != nil {
