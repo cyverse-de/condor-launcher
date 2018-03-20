@@ -148,6 +148,8 @@ func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
 }
 
 func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) (string, error) {
+
+	// Ensure that the logs directory exists for the job.
 	sdir := s.CondorLogDirectory()
 	if path.Base(sdir) != "logs" {
 		sdir = path.Join(sdir, "logs")
@@ -156,12 +158,18 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to create the directory %s", sdir)
 	}
+
+	// Store the Condor configs in Vault.
 	childToken, err := cl.storeConfig(s)
 	if err != nil {
 		return "", err
 	}
+
+	// Create a copy of the configuration that also contains the Vault child token.
 	cfgCopy := CopyConfig(cl.cfg)
 	cfgCopy.Set("vault.child_token.token", childToken)
+
+	// Generate the submission files.
 	subfiles := []struct {
 		filename    string
 		filecontent []byte
@@ -213,6 +221,8 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 		}
 	}
 	submissionPath := subfiles[0].filename
+
+	// Submit the job to Condor.
 	cmd := exec.Command(cl.condorSubmit, submissionPath)
 	cmd.Dir = path.Dir(submissionPath)
 	cmd.Env = []string{
@@ -224,8 +234,11 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to execute %s", cl.condorSubmit)
 	}
+
+	// Log the Condor job ID.
 	id := string(model.ExtractJobID(output))
 	log.Infof("Condor job id is %s\n", id)
+
 	return id, err
 }
 
