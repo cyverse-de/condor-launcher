@@ -14,11 +14,9 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -36,6 +34,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
+	"github.com/cyverse-de/condor-launcher/jobs"
 )
 
 var log = logrus.WithFields(logrus.Fields{
@@ -47,14 +46,6 @@ var log = logrus.WithFields(logrus.Fields{
 func init() {
 	var err error
 	logrus.SetFormatter(&logrus.JSONFormatter{})
-	SubmissionTemplate, err = template.New("condor_submit").Parse(SubmissionTemplateText)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to parse submission template text"))
-	}
-	JobConfigTemplate, err = template.New("job_config").Parse(JobConfigTemplateText)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to parse job config template text"))
-	}
 	IRODSConfigTemplate, err = template.New("irods_config").Parse(IRODSConfigTemplateText)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse irods config template text"))
@@ -169,58 +160,12 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 	cfgCopy := CopyConfig(cl.cfg)
 	cfgCopy.Set("vault.child_token.token", childToken)
 
-	// Generate the submission files.
-	subfiles := []struct {
-		filename    string
-		filecontent []byte
-		template    *template.Template
-		data        interface{}
-		skipTmpl    bool // skip applying the data field to the template
-		jsonify     bool // marshal the data field as JSON and store it in the filecontent field
-		permissions os.FileMode
-	}{
-		{
-			filename:    path.Join(sdir, "iplant.cmd"),
-			template:    SubmissionTemplate,
-			data:        s,
-			permissions: 0644,
-		},
-		{
-			filename:    path.Join(sdir, "config"),
-			template:    JobConfigTemplate,
-			data:        cfgCopy,
-			permissions: 0644,
-		},
-		{
-			filename:    path.Join(sdir, "job"),
-			data:        s,
-			skipTmpl:    true,
-			jsonify:     true,
-			permissions: 0644,
-		},
+	// Generate the submission files, always using the condor job submission format for now.
+	jobSubmissionBuilder, err := jobs.NewJobSubmissionBuilder("condor", cfgCopy)
+	if err != nil {
+		return "", err
 	}
-
-	for _, sf := range subfiles {
-		var fileContent *bytes.Buffer
-		if !sf.skipTmpl {
-			fileContent, err = GenerateFile(sf.template, sf.data)
-			if err != nil {
-				return "", err
-			}
-			sf.filecontent = fileContent.Bytes()
-		}
-		if sf.jsonify {
-			sf.filecontent, err = json.Marshal(sf.data)
-			if err != nil {
-				return "", nil
-			}
-		}
-		err = ioutil.WriteFile(sf.filename, sf.filecontent, sf.permissions)
-		if err != nil {
-			return "", errors.Wrapf(err, "failed to write to file %s", sf.filename)
-		}
-	}
-	submissionPath := subfiles[0].filename
+	submissionPath, err := jobSubmissionBuilder.Build(s, sdir)
 
 	// Submit the job to Condor.
 	cmd := exec.Command(cl.condorSubmit, submissionPath)

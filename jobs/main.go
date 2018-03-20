@@ -8,7 +8,7 @@ import (
 
 // JobSubmissionBuilder is an interface for generating Condor job submissions.
 type JobSubmissionBuilder interface {
-	build(submission *model.Job, dirPath string) (*string, error)
+	Build(submission *model.Job, dirPath string) (string, error)
 }
 
 func NewJobSubmissionBuilder(jobType string, cfg *viper.Viper) (JobSubmissionBuilder, error) {

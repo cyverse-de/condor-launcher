@@ -9,23 +9,23 @@ import (
 	"github.com/pkg/errors"
 )
 
-func generateFile(dirPath, filename string, t *template.Template, data interface{}) (*string, error) {
+func generateFile(dirPath, filename string, t *template.Template, data interface{}) (string, error) {
 
 	// Open the output file for writing.
 	filePath := path.Join(dirPath, filename)
 	out, err := os.OpenFile(filePath, os.O_CREATE | os.O_WRONLY, 0644)
 	if err != nil {
-		return nil, errors.Wrapf(err,"unable to open %s for output", filePath)
+		return "", errors.Wrapf(err,"unable to open %s for output", filePath)
 	}
 	defer out.Close()
 
 	// Generate the file from the template.
 	err = t.Execute(out, data)
 	if err != nil {
-		return nil, errors.Wrapf(err,"unable to generate %s from template %s", filePath, t.Name())
+		return "", errors.Wrapf(err,"unable to generate %s from template %s", filePath, t.Name())
 	}
 
-	return &filePath, nil
+	return filePath, nil
 }
 
 func generateFileContents(t *template.Template, data interface{}) (*bytes.Buffer, error) {
@@ -37,13 +37,13 @@ func generateFileContents(t *template.Template, data interface{}) (*bytes.Buffer
 	return &buffer, err
 }
 
-func generateJson(dirPath, filename string, data interface{}) (*string, error) {
+func generateJson(dirPath, filename string, data interface{}) (string, error) {
 
 	// Open the output file for writing.
 	filePath := path.Join(dirPath, filename)
 	out, err := os.OpenFile(filePath, os.O_CREATE | os.O_WRONLY, 0644)
 	if err != nil {
-		return nil, errors.Wrapf(err,"unable to open %s for output", filePath)
+		return "", errors.Wrapf(err,"unable to open %s for output", filePath)
 	}
 	defer out.Close()
 
@@ -51,8 +51,8 @@ func generateJson(dirPath, filename string, data interface{}) (*string, error) {
 	encoder := json.NewEncoder(out)
 	err = encoder.Encode(data)
 	if err != nil {
-		return nil, errors.Wrapf(err,"unable to marshal JSON to %s", filePath)
+		return "", errors.Wrapf(err,"unable to marshal JSON to %s", filePath)
 	}
 
-	return &filePath, nil
+	return filePath, nil
 }
