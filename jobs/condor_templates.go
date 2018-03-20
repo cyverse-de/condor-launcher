@@ -12,9 +12,6 @@ var (
 
 	// condorJobConfigTemplate is the *template.Template for the job definition JSON
 	condorJobConfigTemplate *template.Template
-
-	// condorIRODSConfigTemplate is the *template.Template for the iRODS config file
-	condorIRODSConfigTemplate *template.Template
 )
 
 // SubmissionTemplateText is the text of the template for the HTCondor
@@ -63,17 +60,6 @@ vault:
     token: "{{.GetString "vault.child_token.token"}}"
     url: "{{.GetString "vault.url"}}"`
 
-// IRODSConfigTemplateText is the text of the template for porklock's iRODS
-// config file.
-const condorIRODSConfigTemplateText = `porklock.irods-host = {{.IRODSHost}}
-porklock.irods-port = {{.IRODSPort}}
-porklock.irods-user = {{.IRODSUser}}
-porklock.irods-pass = {{.IRODSPass}}
-porklock.irods-home = {{.IRODSBase}}
-porklock.irods-zone = {{.IRODSZone}}
-porklock.irods-resc = {{.IRODSResc}}
-`
-
 func init() {
 	var err error
 	condorSubmissionTemplate, err = template.New("condor_submit").Parse(condorSubmissionTemplateText)
@@ -83,9 +69,5 @@ func init() {
 	condorJobConfigTemplate, err = template.New("job_config").Parse(condorJobConfigTemplateText)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse job config template text"))
-	}
-	condorIRODSConfigTemplate, err = template.New("irods_config").Parse(condorIRODSConfigTemplateText)
-	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to parse irods config template text"))
 	}
 }

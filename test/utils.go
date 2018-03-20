@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"runtime"
 	"path"
+	"strings"
 )
 
 func getTestConfigDir(t *testing.T) string {
@@ -25,8 +26,16 @@ func getTestFilePath(t *testing.T, filename string) string {
 }
 
 func InitPath(t *testing.T) {
-	PATH := fmt.Sprintf("%s:%s", getTestConfigDir(t), os.Getenv("PATH"))
-	err := os.Setenv("PATH", PATH)
+	dir := getTestConfigDir(t)
+	path := os.Getenv("PATH")
+
+	// Don't bother updating the path if the test config directory is already in it.
+	if strings.HasPrefix(path, fmt.Sprintf("%s:", dir)) {
+		return
+	}
+
+	// Update the path.
+	err := os.Setenv("PATH", fmt.Sprintf("%s:%s", dir, path))
 	if err != nil {
 		t.Error(err)
 	}
