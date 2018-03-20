@@ -12,6 +12,7 @@ import (
 	"gopkg.in/cyverse-de/messaging.v3"
 
 	"github.com/streadway/amqp"
+	"github.com/cyverse-de/condor-launcher/test"
 )
 
 var client *messaging.Client
@@ -132,7 +133,7 @@ func TestCondorID(t *testing.T) {
 }
 
 func TestExecCondorQ(t *testing.T) {
-	inittests(t)
+	test.InitPath(t)
 	output, err := ExecCondorQHeldIDs("", "")
 	if err != nil {
 		t.Error(err)
@@ -158,7 +159,7 @@ func TestExecCondorQ(t *testing.T) {
 }
 
 func TestExecCondorRm(t *testing.T) {
-	inittests(t)
+	test.InitPath(t)
 	actual, err := ExecCondorRm("foo", "", "")
 	if err != nil {
 		t.Error(err)
@@ -178,7 +179,8 @@ func TestStopHandler(t *testing.T) {
 	if !shouldrun() {
 		return
 	}
-	inittests(t)
+	cfg := test.InitConfig(t)
+	test.InitPath(t)
 	filesystem := newtsys()
 	cl := New(cfg, nil, filesystem, "condor_submit", "condor_rm")
 	stopMsg := messaging.StopRequest{
