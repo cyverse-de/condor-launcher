@@ -35,6 +35,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
 	"github.com/cyverse-de/condor-launcher/jobs"
+	"github.com/constabulary/gb/cmd"
 )
 
 var log = logrus.WithFields(logrus.Fields{
@@ -166,6 +167,9 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 		return "", err
 	}
 	submissionPath, err := jobSubmissionBuilder.Build(s, sdir)
+	if err != nil {
+		return "", err
+	}
 
 	// Submit the job to Condor.
 	cmd := exec.Command(cl.condorSubmit, submissionPath)
