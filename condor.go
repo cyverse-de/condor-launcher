@@ -35,7 +35,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
 	"github.com/cyverse-de/condor-launcher/jobs"
-	"github.com/constabulary/gb/cmd"
 )
 
 var log = logrus.WithFields(logrus.Fields{
