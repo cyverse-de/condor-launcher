@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -11,79 +10,12 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/cyverse-de/configurate"
 	"github.com/streadway/amqp"
 	"gopkg.in/cyverse-de/messaging.v3"
 	"gopkg.in/cyverse-de/model.v1"
 
-	"github.com/spf13/viper"
+	"github.com/cyverse-de/condor-launcher/test"
 )
-
-func JSONData(filename string) ([]byte, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	c, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-	return c, err
-}
-
-var (
-	s   *model.Job
-	cfg *viper.Viper
-)
-
-func inittestsFile(t *testing.T, filename string) *model.Job {
-	var err error
-	cfg, err = configurate.InitDefaults("test/test_config.yaml", configurate.JobServicesDefaults)
-	if err != nil {
-		t.Error(err)
-	}
-	cfg.Set("irods.base", "/path/to/irodsbase")
-	cfg.Set("irods.host", "hostname")
-	cfg.Set("irods.port", "1247")
-	cfg.Set("irods.user", "user")
-	cfg.Set("irods.pass", "pass")
-	cfg.Set("irods.zone", "test")
-	cfg.Set("irods.resc", "")
-	cfg.Set("condor.log_path", "test")
-	cfg.Set("condor.porklock_tag", "test")
-	cfg.Set("condor.filter_files", "foo,bar,baz,blippy")
-	cfg.Set("condor.request_disk", "0")
-	cfg.Set("condor.path_env_var", "/path/to/path")
-	cfg.Set("condor.condor_config", "/condor/config")
-	cfg.Set("vault.irods.child_token.token", "token")
-	cfg.Set("vault.irods.child_token.use_limit", 3)
-	cfg.Set("vault.irods.mount_path", "irods")
-	data, err := JSONData(filename)
-	if err != nil {
-		t.Error(err)
-	}
-	s, err = model.NewFromData(cfg, data)
-	if err != nil {
-		t.Error(err)
-	}
-	PATH := fmt.Sprintf("test/:%s", os.Getenv("PATH"))
-	err = os.Setenv("PATH", PATH)
-	if err != nil {
-		t.Error(err)
-	}
-	return s
-}
-
-func _inittests(t *testing.T, memoize bool) *model.Job {
-	if s == nil || !memoize {
-		s = inittestsFile(t, "test/test_submission.json")
-	}
-	return s
-}
-
-func inittests(t *testing.T) *model.Job {
-	return _inittests(t, true)
-}
 
 type filerecord struct {
 	path     string
@@ -118,116 +50,6 @@ func (t *tsys) WriteFile(path string, contents []byte, mode os.FileMode) error {
 	return nil
 }
 
-func TestGenerateCondorSubmit(t *testing.T) {
-	s := inittests(t)
-
-	actual, err := GenerateFile(SubmissionTemplate, s)
-	if err != nil {
-		t.Error(err)
-	}
-	expected := `universe = vanilla
-executable = /usr/local/bin/road-runner
-rank = mips
-requirements = (HAS_HOST_MOUNTS == True)
-arguments = --config config --job job
-output = script-output.log
-error = script-error.log
-log = condor.log
-accounting_group = de
-accounting_group_user = test_this_is_a_test
-request_disk = 0
-+IpcUuid = "07b04ce2-7757-4b21-9e15-0b4c2f44be26"
-+IpcJobId = "generated_script"
-+IpcUsername = "test_this_is_a_test"
-+IpcUserGroups = {"groups:foo","groups:bar","groups:baz"}
-concurrency_limits = _00000000000000000000000000000000
-+IpcExe = "wc_wrapper.sh"
-+IpcExePath = "/usr/local3/bin/wc_tool-1.00"
-should_transfer_files = YES
-transfer_input_files = iplant.cmd,config,job
-transfer_output_files = workingvolume/logs/logs-stdout-output,workingvolume/logs/logs-stderr-output
-when_to_transfer_output = ON_EXIT_OR_EVICT
-notification = NEVER
-queue
-`
-	if actual.String() != expected {
-		t.Errorf("GenerateCondorSubmit() returned:\n\n%s\n\ninstead of:\n\n%s", actual, expected)
-	}
-}
-
-func TestGenerateCondorSubmitGroup(t *testing.T) {
-	s := inittests(t)
-	s.Group = "foo"
-	actual, err := GenerateFile(SubmissionTemplate, s)
-	if err != nil {
-		t.Error(err)
-	}
-	expected := `universe = vanilla
-executable = /usr/local/bin/road-runner
-rank = mips
-requirements = (HAS_HOST_MOUNTS == True)
-arguments = --config config --job job
-output = script-output.log
-error = script-error.log
-log = condor.log
-accounting_group = foo
-accounting_group_user = test_this_is_a_test
-request_disk = 0
-+IpcUuid = "07b04ce2-7757-4b21-9e15-0b4c2f44be26"
-+IpcJobId = "generated_script"
-+IpcUsername = "test_this_is_a_test"
-+IpcUserGroups = {"groups:foo","groups:bar","groups:baz"}
-concurrency_limits = _00000000000000000000000000000000
-+IpcExe = "wc_wrapper.sh"
-+IpcExePath = "/usr/local3/bin/wc_tool-1.00"
-should_transfer_files = YES
-transfer_input_files = iplant.cmd,config,job
-transfer_output_files = workingvolume/logs/logs-stdout-output,workingvolume/logs/logs-stderr-output
-when_to_transfer_output = ON_EXIT_OR_EVICT
-notification = NEVER
-queue
-`
-	if actual.String() != expected {
-		t.Errorf("GenerateCondorSubmit() returned:\n\n%s\n\ninstead of:\n\n%s", actual, expected)
-	}
-	_inittests(t, false)
-}
-
-func TestGenerateCondorSubmitNoVolumes(t *testing.T) {
-	s := inittestsFile(t, "test/no_volumes_submission.json")
-	actual, err := GenerateFile(SubmissionTemplate, s)
-	if err != nil {
-		t.Error(err)
-	}
-	expected := `universe = vanilla
-executable = /usr/local/bin/road-runner
-rank = mips
-arguments = --config config --job job
-output = script-output.log
-error = script-error.log
-log = condor.log
-accounting_group = de
-accounting_group_user = test_this_is_a_test
-request_disk = 0
-+IpcUuid = "07b04ce2-7757-4b21-9e15-0b4c2f44be26"
-+IpcJobId = "generated_script"
-+IpcUsername = "test_this_is_a_test"
-+IpcUserGroups = {"groups:foo","groups:bar","groups:baz"}
-concurrency_limits = _00000000000000000000000000000000
-+IpcExe = "wc_wrapper.sh"
-+IpcExePath = "/usr/local3/bin/wc_tool-1.00"
-should_transfer_files = YES
-transfer_input_files = iplant.cmd,config,job
-transfer_output_files = workingvolume/logs/logs-stdout-output,workingvolume/logs/logs-stderr-output
-when_to_transfer_output = ON_EXIT_OR_EVICT
-notification = NEVER
-queue
-`
-	if actual.String() != expected {
-		t.Errorf("GenerateCondorSubmit() returned:\n\n%s\n\ninstead of:\n\n%s", actual, expected)
-	}
-}
-
 type VaultTester struct{}
 
 func (v *VaultTester) MountCubbyhole(mountPoint string) error {
@@ -243,7 +65,8 @@ func (v *VaultTester) StoreConfig(token, mountPoint, jobID string, config []byte
 }
 
 func TestLaunch(t *testing.T) {
-	inittests(t)
+	cfg := test.InitConfig(t)
+	test.InitPath(t)
 	csPath, err := exec.LookPath("condor_submit")
 	if err != nil {
 		t.Error(errors.Wrapf(err, "failed to find condor_submit in $PATH"))
@@ -271,7 +94,7 @@ func TestLaunch(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	data, err := JSONData("test/test_submission.json")
+	data, err := ioutil.ReadFile("test/test_submission.json")
 	if err != nil {
 		t.Error(err)
 	}
@@ -351,7 +174,8 @@ func (m *MockMessenger) SetupPublishing(exchange string) error {
 }
 
 func TestHandleEvents(t *testing.T) {
-	inittests(t)
+	cfg := test.InitConfig(t)
+	test.InitPath(t)
 	client := &MockMessenger{
 		publishedMessages: make([]MockMessage, 0),
 	}
@@ -371,7 +195,8 @@ func TestHandleEvents(t *testing.T) {
 }
 
 func TestHandleBadEvents(t *testing.T) {
-	inittests(t)
+	cfg := test.InitConfig(t)
+	test.InitPath(t)
 	client := &MockMessenger{
 		publishedMessages: make([]MockMessage, 0),
 	}
