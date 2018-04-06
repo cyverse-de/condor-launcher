@@ -2,7 +2,7 @@ package jobs
 
 import (
 	"github.com/spf13/viper"
-	"gopkg.in/cyverse-de/model.v1"
+	"gopkg.in/cyverse-de/model.v2"
 )
 
 type CondorJobSubmissionBuilder struct {
