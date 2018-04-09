@@ -5,7 +5,7 @@ import (
 	"github.com/cyverse-de/configurate"
 	"fmt"
 	"os"
-	"gopkg.in/cyverse-de/model.v1"
+	"gopkg.in/cyverse-de/model.v2"
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"runtime"

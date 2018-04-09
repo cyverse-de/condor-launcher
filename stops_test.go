@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"gopkg.in/cyverse-de/messaging.v3"
+	"gopkg.in/cyverse-de/messaging.v4"
 
 	"github.com/streadway/amqp"
 	"github.com/cyverse-de/condor-launcher/test"

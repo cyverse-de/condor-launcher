@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/streadway/amqp"
-	"gopkg.in/cyverse-de/messaging.v3"
-	"gopkg.in/cyverse-de/model.v1"
+	"gopkg.in/cyverse-de/messaging.v4"
+	"gopkg.in/cyverse-de/model.v2"
 
 	"github.com/cyverse-de/condor-launcher/test"
 )
