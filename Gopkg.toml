@@ -24,7 +24,7 @@
 #   go-tests = true
 #   unused-packages = true
 
-ignored = ["golang.org/x/net/idna"]
+# ignored = ["golang.org/x/net/idna"]
 
 [prune]
   unused-packages = true

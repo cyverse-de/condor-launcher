@@ -209,6 +209,7 @@
     "http/httpguts",
     "http2",
     "http2/hpack",
+    "idna",
     "lex/httplex"
   ]
   revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
@@ -221,14 +222,23 @@
 [[projects]]
   name = "golang.org/x/text"
   packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
     "internal/gen",
+    "internal/tag",
     "internal/triegen",
     "internal/ucd",
+    "language",
+    "secure/bidirule",
     "transform",
+    "unicode/bidi",
     "unicode/cldr",
-    "unicode/norm"
+    "unicode/norm",
+    "unicode/rangetable"
   ]
-  revision = "d69c40b4be55797923cec7457fac7a244d91a9b6"
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
 
 [[projects]]
   name = "gopkg.in/cyverse-de/job-templates.v3"
@@ -263,6 +273,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7691d94533767215c20429266d8c8cc4cbf70f98c979e9aef65d6e3e53d23657"
+  inputs-digest = "fdeb6b55f272c099fbf49d09b93c129c1edafa842d606cbdb1d3d70a8fc053eb"
   solver-name = "gps-cdcl"
   solver-version = 1
