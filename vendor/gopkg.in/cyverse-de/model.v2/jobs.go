@@ -57,45 +57,49 @@ func ExtractJobID(output []byte) []byte {
 
 // Job is a type that contains info that goes into the jobs table.
 type Job struct {
-	AppDescription     string         `json:"app_description"`
-	AppID              string         `json:"app_id"`
-	AppName            string         `json:"app_name"`
-	ArchiveLogs        bool           `json:"archive_logs"`
-	ID                 string         `json:"id"`
-	BatchID            string         `json:"batch_id"`
-	CondorID           string         `json:"condor_id"`
-	CondorLogPath      string         `json:"condor_log_path"` //comes from config, not upstream service
-	CreateOutputSubdir bool           `json:"create_output_subdir"`
-	DateSubmitted      time.Time      `json:"date_submitted"`
-	DateStarted        time.Time      `json:"date_started"`
-	DateCompleted      time.Time      `json:"date_completed"`
-	Description        string         `json:"description"`
-	Email              string         `json:"email"`
-	ExecutionTarget    string         `json:"execution_target"`
-	ExitCode           int            `json:"exit_code"`
-	FailureCount       int64          `json:"failure_count"`
-	FailureThreshold   int64          `json:"failure_threshold"`
-	FileMetadata       []FileMetadata `json:"file-metadata"`
-	FilterFiles        []string       `json:"filter_files"` //comes from config, not upstream service
-	Group              string         `json:"group"`        //untested for now
-	InvocationID       string         `json:"uuid"`
-	IRODSBase          string         `json:"irods_base"`
-	Name               string         `json:"name"`
-	NFSBase            string         `json:"nfs_base"`
-	Notify             bool           `json:"notify"`
-	NowDate            string         `json:"now_date"`
-	OutputDir          string         `json:"output_dir"`   //the value parsed out of the JSON. Use OutputDirectory() instead.
-	RequestDisk        string         `json:"request_disk"` //untested for now
-	RequestType        string         `json:"request_type"`
-	RunOnNFS           bool           `json:"run-on-nfs"`
-	SkipParentMetadata bool           `json:"skip-parent-meta"`
-	Steps              []Step         `json:"steps"`
-	SubmissionDate     string         `json:"submission_date"`
-	Submitter          string         `json:"username"`
-	Type               string         `json:"type"`
-	UserID             string         `json:"user_id"`
-	UserGroups         []string       `json:"user_groups"`
-	WikiURL            string         `json:"wiki_url"`
+	AppDescription     string          `json:"app_description"`
+	AppID              string          `json:"app_id"`
+	AppName            string          `json:"app_name"`
+	ArchiveLogs        bool            `json:"archive_logs"`
+	ID                 string          `json:"id"`
+	BatchID            string          `json:"batch_id"`
+	CondorID           string          `json:"condor_id"`
+	CondorLogPath      string          `json:"condor_log_path"` //comes from config, not upstream service
+	CreateOutputSubdir bool            `json:"create_output_subdir"`
+	DateSubmitted      time.Time       `json:"date_submitted"`
+	DateStarted        time.Time       `json:"date_started"`
+	DateCompleted      time.Time       `json:"date_completed"`
+	Description        string          `json:"description"`
+	Email              string          `json:"email"`
+	ExecutionTarget    string          `json:"execution_target"`
+	ExitCode           int             `json:"exit_code"`
+	FailureCount       int64           `json:"failure_count"`
+	FailureThreshold   int64           `json:"failure_threshold"`
+	FileMetadata       []FileMetadata  `json:"file-metadata"`
+	FilterFiles        []string        `json:"filter_files"`       //comes from config, not upstream service
+	Group              string          `json:"group"`              //untested for now
+	InputTicketsFile   string          `json:"inputs_ticket_list"` //path to a list of inputs with tickets (not from upstream).
+	InteractiveApps    InteractiveApps `json:"interactive_apps"`
+	InvocationID       string          `json:"uuid"`
+	IRODSBase          string          `json:"irods_base"`
+	Name               string          `json:"name"`
+	NFSBase            string          `json:"nfs_base"`
+	Notify             bool            `json:"notify"`
+	NowDate            string          `json:"now_date"`
+	OutputDir          string          `json:"output_dir"`         //the value parsed out of the JSON. Use OutputDirectory() instead.
+	OutputDirTicket    string          `json:"output_dir_ticket"`  //the write ticket for output_dir (assumes output_dir is set correctly).
+	OutputTicketFile   string          `json:"output_ticket_list"` //path to the file of the output dest with ticket (not from upstream).
+	RequestDisk        string          `json:"request_disk"`       //untested for now
+	RequestType        string          `json:"request_type"`
+	RunOnNFS           bool            `json:"run-on-nfs"`
+	SkipParentMetadata bool            `json:"skip-parent-meta"`
+	Steps              []Step          `json:"steps"`
+	SubmissionDate     string          `json:"submission_date"`
+	Submitter          string          `json:"username"`
+	Type               string          `json:"type"`
+	UserID             string          `json:"user_id"`
+	UserGroups         []string        `json:"user_groups"`
+	WikiURL            string          `json:"wiki_url"`
 }
 
 // New returns a pointer to a newly instantiated Job with NowDate set.
@@ -162,6 +166,7 @@ func (s *Job) Sanitize() {
 	for i, step := range s.Steps {
 		step.Component.Container.Image.Name = strings.TrimSpace(step.Component.Container.Image.Name)
 		step.Component.Container.Image.Tag = strings.TrimSpace(step.Component.Container.Image.Tag)
+		step.Component.Container.Image.OSGImagePath = strings.TrimSpace(step.Component.Container.Image.OSGImagePath)
 		step.Component.Container.Name = strings.TrimSpace(step.Component.Container.Name)
 
 		for j, vf := range step.Component.Container.VolumesFrom {
@@ -274,8 +279,7 @@ func (s *Job) Outputs() []StepOutput {
 	return outputs
 }
 
-// ExcludeArguments returns a string containing the command-line settings for
-// porklock that tell it which files to skip.
+// ExcludeArguments returns a list of paths that should not upload as outputs.
 func (s *Job) ExcludeArguments() []string {
 	var paths []string
 	for _, input := range s.Inputs() {
@@ -294,12 +298,8 @@ func (s *Job) ExcludeArguments() []string {
 	if !s.ArchiveLogs {
 		paths = append(paths, "logs")
 	}
-	retval := []string{}
-	if len(paths) > 0 {
-		retval = append(retval, "--exclude")
-		retval = append(retval, strings.Join(paths, ","))
-	}
-	return retval
+
+	return paths
 }
 
 // AddRequiredMetadata adds any required AVUs that are required but are missing
@@ -341,7 +341,7 @@ func (s *Job) AddRequiredMetadata() {
 // FinalOutputArguments returns a string containing the arguments passed to
 // porklock for the final output operation, which transfers all files back into
 // iRODS.
-func (s *Job) FinalOutputArguments() []string {
+func (s *Job) FinalOutputArguments(excludeFilePath string) []string {
 	dest := s.OutputDirectory()
 	retval := []string{
 		"put",
@@ -351,8 +351,8 @@ func (s *Job) FinalOutputArguments() []string {
 	for _, m := range MetadataArgs(s.FileMetadata).FileMetadataArguments() {
 		retval = append(retval, m)
 	}
-	for _, e := range s.ExcludeArguments() {
-		retval = append(retval, e)
+	if excludeFilePath != "" {
+		retval = append(retval, "--exclude", excludeFilePath)
 	}
 	if s.SkipParentMetadata {
 		retval = append(retval, "--skip-parent-meta")
@@ -374,6 +374,16 @@ func (s *Job) UsesVolumes() bool {
 		}
 	}
 	return false
+}
+
+func (job *Job) FilterInputsWithTickets() []StepInput {
+	var inputs []StepInput
+	for _, input := range job.Inputs() {
+		if input.Ticket != "" {
+			inputs = append(inputs, input)
+		}
+	}
+	return inputs
 }
 
 // FileMetadata describes a unit of metadata that should get associated with

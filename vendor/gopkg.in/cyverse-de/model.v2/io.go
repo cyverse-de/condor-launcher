@@ -9,6 +9,7 @@ import (
 // StepInput describes a single input for a job step.
 type StepInput struct {
 	ID           string `json:"id"`
+	Ticket       string `json:"ticket"`
 	Multiplicity string `json:"multiplicity"`
 	Name         string `json:"name"`
 	Property     string `json:"property"`

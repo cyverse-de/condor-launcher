@@ -27,10 +27,7 @@
 
 [[projects]]
   name = "github.com/cyverse-de/model"
-  packages = [
-    ".",
-    "submitfile"
-  ]
+  packages = ["submitfile"]
   revision = "bf8453314372d00979c0cdf7da069515acdbb6be"
   version = "v1"
 
@@ -249,6 +246,12 @@
   version = "v1.1"
 
 [[projects]]
+  name = "gopkg.in/cyverse-de/model.v2"
+  packages = ["."]
+  revision = "d3df3e533f048ecc78a41e1c5a42e2297ab4861b"
+  version = "v2.4"
+
+[[projects]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -257,6 +260,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "43f730eb57cfb5547f1fdbe9a6a584f272d4a9c7ec9d57da6b1c52b3e092724b"
+  inputs-digest = "834a4f32d2a7da7948680f00c905eb51e173235a4fc7baaab37db0b9cd8743db"
   solver-name = "gps-cdcl"
   solver-version = 1

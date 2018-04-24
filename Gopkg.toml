@@ -34,10 +34,6 @@ ignored = ["golang.org/x/net/idna"]
   name = "github.com/cyverse-de/condor-launcher"
 
 [[constraint]]
-  name = "github.com/cyverse-de/model"
-  version = "1.0.0"
-
-[[constraint]]
   branch = "master"
   name = "github.com/cyverse-de/vaulter"
 
@@ -52,3 +48,7 @@ ignored = ["golang.org/x/net/idna"]
 [[constraint]]
   name = "gopkg.in/cyverse-de/model.v1"
   version = "1.1.0"
+
+[[constraint]]
+  name = "gopkg.in/cyverse-de/model.v2"
+  version = "2.4.0"

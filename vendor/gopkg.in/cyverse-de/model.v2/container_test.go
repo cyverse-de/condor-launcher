@@ -42,6 +42,22 @@ func TestStepContainerImageName(t *testing.T) {
 	}
 }
 
+func TestStepContainerMissingOSGImagePath(t *testing.T) {
+	s := inittests(t)
+	image := s.Steps[0].Component.Container.Image
+	if image.OSGImagePath != "" {
+		t.Errorf("The OSG image path of the container was '%s' when it should have been empty", image.OSGImagePath)
+	}
+}
+
+func TestStepContainerOSGImagePath(t *testing.T) {
+	s := inittestsFile(t, "test/test_submission_osg.json")
+	image := s.Steps[0].Component.Container.Image
+	if image.OSGImagePath != "/path/to/image" {
+		t.Errorf("The OSG image path of the container was '%s' when it should have been '/path/to/image'", image.OSGImagePath)
+	}
+}
+
 func TestStepContainerVolumesFrom1(t *testing.T) {
 	s := inittests(t)
 	vfs := s.Steps[0].Component.Container.VolumesFrom
@@ -223,5 +239,36 @@ func TestDevices(t *testing.T) {
 	}
 	if d2.ContainerPath != "/container/path2" {
 		t.Errorf("The second device's container path was '%s' instead of '/container/path1'", d2.ContainerPath)
+	}
+}
+
+func TestPorts(t *testing.T) {
+	s := inittests(t)
+
+	numports := len(s.Steps[0].Component.Container.Ports)
+	if numports != 2 {
+		t.Errorf("The number of port mappings was '%d' instead of 2", numports)
+	}
+
+	p1 := s.Steps[0].Component.Container.Ports[0]
+	if p1.ContainerPort != "1000" {
+		t.Errorf("container port was %s instead of 1000", p1.ContainerPort)
+	}
+	if p1.HostPort != "1001" {
+		t.Errorf("host port was %s instead of 1001", p1.HostPort)
+	}
+	if p1.BindToHost {
+		t.Error("bind to host was true")
+	}
+
+	p2 := s.Steps[0].Component.Container.Ports[1]
+	if p2.ContainerPort != "1002" {
+		t.Errorf("container port was %s instead of 1002", p2.ContainerPort)
+	}
+	if p2.HostPort != "1003" {
+		t.Errorf("host port was %s instead of 1003", p2.HostPort)
+	}
+	if !p2.BindToHost {
+		t.Error("bind to host was false")
 	}
 }

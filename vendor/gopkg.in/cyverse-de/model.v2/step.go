@@ -19,22 +19,43 @@ type StepComponent struct {
 	Restricted  bool      `json:"restricted"`
 }
 
+// StepInteractiveConfig is where the tool specific interactive app settings are
+// located in the job definition.
+type StepInteractiveConfig struct {
+	// If websocket handling requires a special path in the app. The default is to
+	// have this be empty.
+	WebsocketPath string `json:"websocket_path"`
+
+	// If websocket handling requires a special port in the app. The default is to
+	// use the same port as the backend URL.
+	WebsocketPort string `json:"websocket_port"`
+
+	// If websocket handling requires a protocol other than ws://.
+	WebsocketProto string `json:"websocket_proto"`
+
+	// Only used if you need to override the default backendURL, which should be
+	// http://<container_name>.
+	BackendURL string `json:"backend_url"`
+}
+
 // StepEnvironment defines the environment variables that should be set for a
 // step
 type StepEnvironment map[string]string
 
 // Step describes a single step in a job. All jobs contain multiple steps.
 type Step struct {
-	Component   StepComponent
-	Config      StepConfig
-	Type        string          `json:"type"`
-	StdinPath   string          `json:"stdin"`
-	StdoutPath  string          `json:"stdout"`
-	StderrPath  string          `json:"stderr"`
-	LogFile     string          `json:"log-file"`
-	Environment StepEnvironment `json:"environment"`
-	Input       []StepInput     `json:"input"`
-	Output      []StepOutput    `json:"output"`
+	Component         StepComponent
+	Config            StepConfig
+	Type              string                `json:"type"`
+	StdinPath         string                `json:"stdin"`
+	StdoutPath        string                `json:"stdout"`
+	StderrPath        string                `json:"stderr"`
+	LogFile           string                `json:"log-file"`
+	Environment       StepEnvironment       `json:"environment"`
+	IsInteractive     bool                  `json:"is_interactive"`
+	InteractiveConfig StepInteractiveConfig `json:"interactive_config"`
+	Input             []StepInput           `json:"input"`
+	Output            []StepOutput          `json:"output"`
 }
 
 // EnvOptions returns a string containing the docker command-line options

@@ -1,16 +1,17 @@
 package test
 
 import (
-	"testing"
-	"github.com/cyverse-de/configurate"
 	"fmt"
-	"os"
-	"gopkg.in/cyverse-de/model.v1"
-	"github.com/spf13/viper"
 	"io/ioutil"
-	"runtime"
+	"os"
 	"path"
+	"runtime"
 	"strings"
+	"testing"
+
+	"github.com/cyverse-de/configurate"
+	"github.com/spf13/viper"
+	"gopkg.in/cyverse-de/model.v2"
 )
 
 func getTestConfigDir(t *testing.T) string {

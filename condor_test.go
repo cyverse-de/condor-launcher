@@ -12,7 +12,7 @@ import (
 
 	"github.com/streadway/amqp"
 	"gopkg.in/cyverse-de/messaging.v3"
-	"gopkg.in/cyverse-de/model.v1"
+	"gopkg.in/cyverse-de/model.v2"
 
 	"github.com/cyverse-de/condor-launcher/test"
 )
@@ -78,7 +78,6 @@ func TestLaunch(t *testing.T) {
 		}
 	}
 	crPath, err := exec.LookPath("condor_rm")
-	log.Infof("condor_rm found at %s", crPath)
 	if err != nil {
 		t.Error(errors.Wrap(err, "failed to find condor_rm on the $PATH"))
 	}
@@ -137,9 +136,9 @@ type MockMessenger struct {
 	publishError      bool
 }
 
-func (m *MockMessenger) Close()  {}
-func (m *MockMessenger) Listen() {}
-func (m *MockMessenger) DeleteQueue(name string) error {return nil}
+func (m *MockMessenger) Close()                        {}
+func (m *MockMessenger) Listen()                       {}
+func (m *MockMessenger) DeleteQueue(name string) error { return nil }
 
 func (m *MockMessenger) AddConsumer(exchange, exchangeType, queue, key string, handler messaging.MessageHandler, prefetchCount int) {
 	m.consumers = append(m.consumers, MockConsumer{

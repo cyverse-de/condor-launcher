@@ -30,11 +30,11 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/cyverse-de/messaging.v3"
-	"gopkg.in/cyverse-de/model.v1"
+	"gopkg.in/cyverse-de/model.v2"
 
+	"github.com/cyverse-de/condor-launcher/jobs"
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
-	"github.com/cyverse-de/condor-launcher/jobs"
 )
 
 var log = logrus.WithFields(logrus.Fields{
