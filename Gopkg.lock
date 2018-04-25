@@ -243,8 +243,8 @@
 [[projects]]
   name = "gopkg.in/cyverse-de/job-templates.v3"
   packages = ["."]
-  revision = "cb07f74b4d6d99d58a6569671c2cfc51620410fd"
-  version = "v3.1"
+  revision = "4bf47746376edd207fe14d9e933149590c09e9de"
+  version = "v3.2"
 
 [[projects]]
   name = "gopkg.in/cyverse-de/messaging.v4"
