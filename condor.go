@@ -161,7 +161,7 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 	cfgCopy.Set("vault.child_token.token", childToken)
 
 	// Generate the submission files, always using the condor job submission format for now.
-	jobSubmissionBuilder, err := jobs.NewJobSubmissionBuilder("condor", cfgCopy)
+	jobSubmissionBuilder, err := jobs.NewJobSubmissionBuilder(s.ExecutionTarget, cfgCopy)
 	if err != nil {
 		return "", err
 	}
