@@ -29,12 +29,12 @@ import (
 	"github.com/cyverse-de/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/cyverse-de/messaging.v3"
-	"gopkg.in/cyverse-de/model.v1"
+	"gopkg.in/cyverse-de/messaging.v4"
+	"gopkg.in/cyverse-de/model.v2"
 
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
-	"github.com/cyverse-de/condor-launcher/jobs"
+	jobs "gopkg.in/cyverse-de/job-templates.v3"
 )
 
 var log = logrus.WithFields(logrus.Fields{
@@ -161,7 +161,7 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 	cfgCopy.Set("vault.child_token.token", childToken)
 
 	// Generate the submission files, always using the condor job submission format for now.
-	jobSubmissionBuilder, err := jobs.NewJobSubmissionBuilder("condor", cfgCopy)
+	jobSubmissionBuilder, err := jobs.NewJobSubmissionBuilder(s.ExecutionTarget, cfgCopy)
 	if err != nil {
 		return "", err
 	}
