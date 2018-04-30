@@ -28,10 +28,14 @@
   name = "github.com/pkg/errors"
   version = "0.8.0"
 
+[[constraint]]
+  name = "github.com/cyverse-de/configurate"
+  version = "0.2.1"
+
 [prune]
   go-tests = true
   unused-packages = true
 
 [[constraint]]
   name = "gopkg.in/cyverse-de/model.v2"
-  version = "2.4.0"
+  version = "2.5.0"

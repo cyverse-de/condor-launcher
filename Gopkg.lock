@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  branch = "master"
-  name = "github.com/cyverse-de/condor-launcher"
-  packages = ["test"]
-  revision = "d52ec0e2b604aa78d3acca2c5f766d7e5955ff75"
-
-[[projects]]
   name = "github.com/cyverse-de/configurate"
   packages = ["."]
   revision = "4b85e07b4aea9377eebe7ce7ee9efff574751ab4"
@@ -243,8 +237,8 @@
 [[projects]]
   name = "gopkg.in/cyverse-de/job-templates.v3"
   packages = ["."]
-  revision = "4bf47746376edd207fe14d9e933149590c09e9de"
-  version = "v3.2"
+  revision = "8300ad66078bbd7bd27134e8d022a53549f6dc15"
+  version = "v3.4"
 
 [[projects]]
   name = "gopkg.in/cyverse-de/messaging.v4"
@@ -253,16 +247,10 @@
   version = "v4"
 
 [[projects]]
-  name = "gopkg.in/cyverse-de/model.v1"
-  packages = ["."]
-  revision = "3b06c9e9e248fcd8bcb1b660b3047908cb91c1ba"
-  version = "v1.1"
-
-[[projects]]
   name = "gopkg.in/cyverse-de/model.v2"
   packages = ["."]
-  revision = "d3df3e533f048ecc78a41e1c5a42e2297ab4861b"
-  version = "v2.4"
+  revision = "83170909c978fa6270a371f18b620175d76d73e4"
+  version = "v2.5"
 
 [[projects]]
   branch = "v2"
@@ -273,6 +261,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "fdeb6b55f272c099fbf49d09b93c129c1edafa842d606cbdb1d3d70a8fc053eb"
+  inputs-digest = "323d4b2ae6f93a3992916362f1f1e9044fb5bcb762ea6b2ed43468a9f46a9a56"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -100,6 +100,7 @@ type Job struct {
 	UserID             string          `json:"user_id"`
 	UserGroups         []string        `json:"user_groups"`
 	WikiURL            string          `json:"wiki_url"`
+	ConfigFile         string          `json:"config_file"` //path to the job configuration file (not from upstream)
 }
 
 // New returns a pointer to a newly instantiated Job with NowDate set.
