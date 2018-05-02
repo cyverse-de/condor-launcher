@@ -31,4 +31,7 @@ irods:
 porklock:
   image: discoenv/porklock
   tag: "dev"
+
+tickets_path_list:
+  file_identifier: "# application/vnd.de.tickets-path-list+csv; version=1"
 `

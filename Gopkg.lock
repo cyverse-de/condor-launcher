@@ -4,7 +4,8 @@
 [[projects]]
   name = "github.com/cyverse-de/configurate"
   packages = ["."]
-  revision = "4b85e07b4aea9377eebe7ce7ee9efff574751ab4"
+  revision = "c595102a4541f21108b7b8fe6a3d9858aaab79c7"
+  version = "0.2.1"
 
 [[projects]]
   name = "github.com/cyverse-de/go-events"
@@ -261,6 +262,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "323d4b2ae6f93a3992916362f1f1e9044fb5bcb762ea6b2ed43468a9f46a9a56"
+  inputs-digest = "dc8d6ca62636045c1e65c324a8acd0123f271a4e74996e1bc170a16ab5bb730f"
   solver-name = "gps-cdcl"
   solver-version = 1

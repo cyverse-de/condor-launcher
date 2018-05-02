@@ -34,8 +34,8 @@
   revision = "16990631d4aa7e38f73dbbbf37fa13e67c648531"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/cyverse-de/condor-launcher"
+  name = "github.com/cyverse-de/configurate"
+  version = "0.2.1"
 
 [[constraint]]
   branch = "master"
