@@ -12,7 +12,7 @@ func TestGenerateOSGSubmit(t *testing.T) {
 		t.Error(err)
 	}
 	expected := `universe = vanilla
-executable = wrapper
+executable = /usr/bin/wrapper
 requirements = HAS_SINGULARITY == TRUE
 
 output = script-output.log
@@ -25,11 +25,12 @@ log = condor.log
 +IpcUuid = "2256dd6d-d984-4d3a-ad71-ab1ff341f636"
 +IpcJobId = "generated_script"
 +IpcUsername = "sarahr"
++ProjectName = "cyverse"
 
 should_transfer_files = YES
 transfer_executable = False
 transfer_input_files = iplant.cmd,config.json,output_ticket.list,input_ticket.list
-when_to_transfer_output = NEVER
+when_to_transfer_output = ON_EXIT_OR_EVICT
 notification = NEVER
 
 queue
