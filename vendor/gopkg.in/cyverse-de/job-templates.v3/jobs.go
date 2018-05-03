@@ -22,6 +22,8 @@ func NewJobSubmissionBuilder(jobType string, cfg *viper.Viper) (JobSubmissionBui
 		return newCondorJobSubmissionBuilder(cfg), nil
 	case "interapps":
 		return InterappsSubmissionBuilder{cfg: cfg}, nil
+	case "osg":
+		return newOSGJobSubmissionBuilder(cfg), nil
 	default:
 		return nil, fmt.Errorf("unrecognized job submission type: %s", jobType)
 	}
