@@ -3,6 +3,7 @@ package jobs
 import (
 	"github.com/spf13/viper"
 	"gopkg.in/cyverse-de/model.v2"
+	"path/filepath"
 )
 
 // OSGJobSubmissionBuilder is responsible for writing out the iplant.cmd, config.json,
@@ -53,20 +54,23 @@ func (b OSGJobSubmissionBuilder) Build(submission *model.Job, dirPath string) (s
 		templateFields,
 	}
 
-	submission.OutputTicketFile, err = generateOutputTicketList(dirPath, templateModel)
+	outputTicketFile, err := generateOutputTicketList(dirPath, templateModel)
 	if err != nil {
 		return "", err
 	}
+	submission.OutputTicketFile = filepath.Base(outputTicketFile)
 
-	submission.InputTicketsFile, err = generateInputTicketList(dirPath, templateModel)
+	inputTicketFile, err := generateInputTicketList(dirPath, templateModel)
 	if err != nil {
 		return "", err
 	}
+	submission.InputTicketsFile = filepath.Base(inputTicketFile)
 
-	submission.ConfigFile, err = b.generateConfigJson(submission, dirPath)
+	configFile, err := b.generateConfigJson(submission, dirPath)
 	if err != nil {
 		return "", err
 	}
+	submission.ConfigFile = filepath.Base(configFile)
 
 	// Generate the submission file.
 	submitFilePath, err := generateFile(dirPath, "iplant.cmd", osgSubmissionTemplate, submission)
