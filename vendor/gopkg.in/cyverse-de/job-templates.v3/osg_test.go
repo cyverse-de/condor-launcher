@@ -20,7 +20,7 @@ func TestGenerateOSGConfigJSONFile(t *testing.T) {
     "irods_job_user": "sarahr",
     "input_ticket_list": "input_ticket.list",
     "output_ticket_list": "output_ticket.list",
-    "status_update_url": "http://sl.iplantc.org",
+    "status_update_url": "http://sl.iplantc.org/2256dd6d-d984-4d3a-ad71-ab1ff341f636/status",
     "stdout": "out.txt",
     "stderr": "err.txt"
 }

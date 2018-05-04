@@ -3,6 +3,7 @@ package jobs
 import (
 	"github.com/spf13/viper"
 	"gopkg.in/cyverse-de/model.v2"
+	"net/url"
 	"path/filepath"
 )
 
@@ -24,6 +25,12 @@ type OSGJobConfig struct {
 	Stderr           string `json:"stderr"`
 }
 
+func (b OSGJobSubmissionBuilder) generateJobStatusUpdateUrl(submission *model.Job) string {
+	return b.cfg.GetString("status_listener.url") +
+		"/" + url.PathEscape(submission.InvocationID) +
+		"/status"
+}
+
 // generateConfig builds the configuration structure without marshaling it. The primary reason this function
 // exists is to make testing easier.
 func (b OSGJobSubmissionBuilder) generateConfig(submission *model.Job) *OSGJobConfig {
@@ -33,7 +40,7 @@ func (b OSGJobSubmissionBuilder) generateConfig(submission *model.Job) *OSGJobCo
 		IrodsJobUser:     submission.Submitter,
 		InputTicketList:  submission.InputTicketsFile,
 		OutputTicketList: submission.OutputTicketFile,
-		StatusUpdateUrl:  b.cfg.GetString("status_listener.url"),
+		StatusUpdateUrl:  b.generateJobStatusUpdateUrl(submission),
 		Stdout:           "out.txt",
 		Stderr:           "err.txt",
 	}
