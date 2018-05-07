@@ -57,50 +57,49 @@ func ExtractJobID(output []byte) []byte {
 
 // Job is a type that contains info that goes into the jobs table.
 type Job struct {
-	AppDescription     string          `json:"app_description"`
-	AppID              string          `json:"app_id"`
-	AppName            string          `json:"app_name"`
-	ArchiveLogs        bool            `json:"archive_logs"`
-	ID                 string          `json:"id"`
-	BatchID            string          `json:"batch_id"`
-	CondorID           string          `json:"condor_id"`
-	CondorLogPath      string          `json:"condor_log_path"` //comes from config, not upstream service
-	CreateOutputSubdir bool            `json:"create_output_subdir"`
-	DateSubmitted      time.Time       `json:"date_submitted"`
-	DateStarted        time.Time       `json:"date_started"`
-	DateCompleted      time.Time       `json:"date_completed"`
-	Description        string          `json:"description"`
-	Email              string          `json:"email"`
-	ExecutionTarget    string          `json:"execution_target"`
-	ExitCode           int             `json:"exit_code"`
-	FailureCount       int64           `json:"failure_count"`
-	FailureThreshold   int64           `json:"failure_threshold"`
-	FileMetadata       []FileMetadata  `json:"file-metadata"`
-	FilterFiles        []string        `json:"filter_files"`       //comes from config, not upstream service
-	Group              string          `json:"group"`              //untested for now
-	InputTicketsFile   string          `json:"inputs_ticket_list"` //path to a list of inputs with tickets (not from upstream).
-	InteractiveApps    InteractiveApps `json:"interactive_apps"`
-	InvocationID       string          `json:"uuid"`
-	IRODSBase          string          `json:"irods_base"`
-	Name               string          `json:"name"`
-	NFSBase            string          `json:"nfs_base"`
-	Notify             bool            `json:"notify"`
-	NowDate            string          `json:"now_date"`
-	OutputDir          string          `json:"output_dir"`         //the value parsed out of the JSON. Use OutputDirectory() instead.
-	OutputDirTicket    string          `json:"output_dir_ticket"`  //the write ticket for output_dir (assumes output_dir is set correctly).
-	OutputTicketFile   string          `json:"output_ticket_list"` //path to the file of the output dest with ticket (not from upstream).
-	RequestDisk        string          `json:"request_disk"`       //untested for now
-	RequestType        string          `json:"request_type"`
-	RunOnNFS           bool            `json:"run-on-nfs"`
-	SkipParentMetadata bool            `json:"skip-parent-meta"`
-	Steps              []Step          `json:"steps"`
-	SubmissionDate     string          `json:"submission_date"`
-	Submitter          string          `json:"username"`
-	Type               string          `json:"type"`
-	UserID             string          `json:"user_id"`
-	UserGroups         []string        `json:"user_groups"`
-	WikiURL            string          `json:"wiki_url"`
-	ConfigFile         string          `json:"config_file"` //path to the job configuration file (not from upstream)
+	AppDescription     string         `json:"app_description"`
+	AppID              string         `json:"app_id"`
+	AppName            string         `json:"app_name"`
+	ArchiveLogs        bool           `json:"archive_logs"`
+	ID                 string         `json:"id"`
+	BatchID            string         `json:"batch_id"`
+	CondorID           string         `json:"condor_id"`
+	CondorLogPath      string         `json:"condor_log_path"` //comes from config, not upstream service
+	CreateOutputSubdir bool           `json:"create_output_subdir"`
+	DateSubmitted      time.Time      `json:"date_submitted"`
+	DateStarted        time.Time      `json:"date_started"`
+	DateCompleted      time.Time      `json:"date_completed"`
+	Description        string         `json:"description"`
+	Email              string         `json:"email"`
+	ExecutionTarget    string         `json:"execution_target"`
+	ExitCode           int            `json:"exit_code"`
+	FailureCount       int64          `json:"failure_count"`
+	FailureThreshold   int64          `json:"failure_threshold"`
+	FileMetadata       []FileMetadata `json:"file-metadata"`
+	FilterFiles        []string       `json:"filter_files"`       //comes from config, not upstream service
+	Group              string         `json:"group"`              //untested for now
+	InputTicketsFile   string         `json:"inputs_ticket_list"` //path to a list of inputs with tickets (not from upstream).
+	InvocationID       string         `json:"uuid"`
+	IRODSBase          string         `json:"irods_base"`
+	Name               string         `json:"name"`
+	NFSBase            string         `json:"nfs_base"`
+	Notify             bool           `json:"notify"`
+	NowDate            string         `json:"now_date"`
+	OutputDir          string         `json:"output_dir"`         //the value parsed out of the JSON. Use OutputDirectory() instead.
+	OutputDirTicket    string         `json:"output_dir_ticket"`  //the write ticket for output_dir (assumes output_dir is set correctly).
+	OutputTicketFile   string         `json:"output_ticket_list"` //path to the file of the output dest with ticket (not from upstream).
+	RequestDisk        string         `json:"request_disk"`       //untested for now
+	RequestType        string         `json:"request_type"`
+	RunOnNFS           bool           `json:"run-on-nfs"`
+	SkipParentMetadata bool           `json:"skip-parent-meta"`
+	Steps              []Step         `json:"steps"`
+	SubmissionDate     string         `json:"submission_date"`
+	Submitter          string         `json:"username"`
+	Type               string         `json:"type"`
+	UserID             string         `json:"user_id"`
+	UserGroups         []string       `json:"user_groups"`
+	WikiURL            string         `json:"wiki_url"`
+	ConfigFile         string         `json:"config_file"` //path to the job configuration file (not from upstream)
 }
 
 // New returns a pointer to a newly instantiated Job with NowDate set.

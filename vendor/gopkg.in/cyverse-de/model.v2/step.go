@@ -52,7 +52,7 @@ type Step struct {
 	StderrPath        string                `json:"stderr"`
 	LogFile           string                `json:"log-file"`
 	Environment       StepEnvironment       `json:"environment"`
-	IsInteractive     bool                  `json:"is_interactive"`
+	IsInteractive     bool                  `json:"interactive"`
 	InteractiveConfig StepInteractiveConfig `json:"interactive_config"`
 	Input             []StepInput           `json:"input"`
 	Output            []StepOutput          `json:"output"`
