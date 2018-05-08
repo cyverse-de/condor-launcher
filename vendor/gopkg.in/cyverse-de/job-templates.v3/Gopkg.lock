@@ -2,10 +2,10 @@
 
 
 [[projects]]
-  branch = "master"
   name = "github.com/cyverse-de/configurate"
   packages = ["."]
-  revision = "c595102a4541f21108b7b8fe6a3d9858aaab79c7"
+  revision = "48ae906086cf434ab907a239a32f7d24506b090f"
+  version = "0.2.2"
 
 [[projects]]
   name = "github.com/cyverse-de/model"

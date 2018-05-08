@@ -46,7 +46,7 @@ func (b CondorJobSubmissionBuilder) Build(submission *model.Job, dirPath string)
 	}
 
 	// Write the job submission to a JSON file.
-	_, err = generateJson(dirPath, "job", submission)
+	_, err = generateJSON(dirPath, "job", submission)
 	if err != nil {
 		return "", err
 	}
@@ -81,7 +81,7 @@ func (b InterappsSubmissionBuilder) Build(submission *model.Job, dirPath string)
 	}
 
 	// Write the job submission to a JSON file.
-	_, err = generateJson(dirPath, "job", submission)
+	_, err = generateJSON(dirPath, "job", submission)
 	if err != nil {
 		return "", err
 	}

@@ -37,7 +37,7 @@ func generateFileContents(t *template.Template, data interface{}) (*bytes.Buffer
 	return &buffer, err
 }
 
-func generateJson(dirPath, filename string, data interface{}) (string, error) {
+func generateJSON(dirPath, filename string, data interface{}) (string, error) {
 
 	// Open the output file for writing.
 	filePath := path.Join(dirPath, filename)
@@ -57,7 +57,7 @@ func generateJson(dirPath, filename string, data interface{}) (string, error) {
 	return filePath, nil
 }
 
-func generateJsonContents(data interface{}) (*bytes.Buffer, error) {
+func generateJSONContents(data interface{}) (*bytes.Buffer, error) {
 	var buffer bytes.Buffer
 	encoder := json.NewEncoder(&buffer)
 	encoder.SetIndent("", "    ")
