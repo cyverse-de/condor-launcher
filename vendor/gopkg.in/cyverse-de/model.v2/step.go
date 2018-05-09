@@ -44,18 +44,17 @@ type StepEnvironment map[string]string
 
 // Step describes a single step in a job. All jobs contain multiple steps.
 type Step struct {
-	Component         StepComponent
-	Config            StepConfig
-	Type              string                `json:"type"`
-	StdinPath         string                `json:"stdin"`
-	StdoutPath        string                `json:"stdout"`
-	StderrPath        string                `json:"stderr"`
-	LogFile           string                `json:"log-file"`
-	Environment       StepEnvironment       `json:"environment"`
-	IsInteractive     bool                  `json:"interactive"`
-	InteractiveConfig StepInteractiveConfig `json:"interactive_config"`
-	Input             []StepInput           `json:"input"`
-	Output            []StepOutput          `json:"output"`
+	Component     StepComponent
+	Config        StepConfig
+	Type          string          `json:"type"`
+	StdinPath     string          `json:"stdin"`
+	StdoutPath    string          `json:"stdout"`
+	StderrPath    string          `json:"stderr"`
+	LogFile       string          `json:"log-file"`
+	Environment   StepEnvironment `json:"environment"`
+	IsInteractive bool            `json:"interactive"`
+	Input         []StepInput     `json:"input"`
+	Output        []StepOutput    `json:"output"`
 }
 
 // EnvOptions returns a string containing the docker command-line options
