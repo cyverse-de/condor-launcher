@@ -12,9 +12,9 @@ type Volume struct {
 // parseable as an integer. Callers should not provide interface information,
 // that will be handled by the services.
 type Ports struct {
-	HostPort      string `json:"host_port"`
-	ContainerPort string `json:"container_port"`
-	BindToHost    bool   `json:"bind_to_host"`
+	HostPort      int  `json:"host_port"`
+	ContainerPort int  `json:"container_port"`
+	BindToHost    bool `json:"bind_to_host"`
 }
 
 // Device describes the mapping between a host device and the container device.

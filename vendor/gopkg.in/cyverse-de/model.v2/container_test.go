@@ -251,22 +251,22 @@ func TestPorts(t *testing.T) {
 	}
 
 	p1 := s.Steps[0].Component.Container.Ports[0]
-	if p1.ContainerPort != "1000" {
-		t.Errorf("container port was %s instead of 1000", p1.ContainerPort)
+	if p1.ContainerPort != 1000 {
+		t.Errorf("container port was %d instead of 1000", p1.ContainerPort)
 	}
-	if p1.HostPort != "1001" {
-		t.Errorf("host port was %s instead of 1001", p1.HostPort)
+	if p1.HostPort != 1001 {
+		t.Errorf("host port was %d instead of 1001", p1.HostPort)
 	}
 	if p1.BindToHost {
 		t.Error("bind to host was true")
 	}
 
 	p2 := s.Steps[0].Component.Container.Ports[1]
-	if p2.ContainerPort != "1002" {
-		t.Errorf("container port was %s instead of 1002", p2.ContainerPort)
+	if p2.ContainerPort != 1002 {
+		t.Errorf("container port was %d instead of 1002", p2.ContainerPort)
 	}
-	if p2.HostPort != "1003" {
-		t.Errorf("host port was %s instead of 1003", p2.HostPort)
+	if p2.HostPort != 1003 {
+		t.Errorf("host port was %d instead of 1003", p2.HostPort)
 	}
 	if !p2.BindToHost {
 		t.Error("bind to host was false")

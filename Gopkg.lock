@@ -250,8 +250,8 @@
 [[projects]]
   name = "gopkg.in/cyverse-de/model.v2"
   packages = ["."]
-  revision = "1cfe91dadfc9597b67294e06a38848ef998f8fb2"
-  version = "v2.9"
+  revision = "4aff5a8d5de9eb2eeb6b1e9c19dbc443c5e8b347"
+  version = "v2.10"
 
 [[projects]]
   branch = "v2"
