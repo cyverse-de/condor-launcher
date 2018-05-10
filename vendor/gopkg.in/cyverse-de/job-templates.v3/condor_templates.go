@@ -45,8 +45,7 @@ var (
 
 // SubmissionTemplateText is the text of the template for the HTCondor
 // submission file.
-const condorSubmissionTemplateText =
-`universe = vanilla
+const condorSubmissionTemplateText = `universe = vanilla
 executable = /usr/local/bin/road-runner
 rank = mips
 requirements = (HAS_CYVERSE_ROAD_RUNNER =?= True){{ if .UsesVolumes }} && (HAS_HOST_MOUNTS =?= True){{ end }}
@@ -102,22 +101,19 @@ vault:
 `
 
 // The text of the template for a list of input files without download tickets.
-const inputPathListTemplateText =
-`{{.PathListHeader}}
+const inputPathListTemplateText = `{{.PathListHeader}}
 {{range .FilterInputsWithoutTickets -}}
 {{.IRODSPath}}
 {{end}}`
 
 // The text of the template for a list of input files with iRODS download tickets.
-const inputTicketListTemplateText =
-`{{.TicketPathListHeader}}
+const inputTicketListTemplateText = `{{.TicketPathListHeader}}
 {{range .FilterInputsWithTickets -}}
 {{.Ticket}},{{.IRODSPath}}
 {{end}}`
 
 // The text of the template for the iRODS output dest with ticket.
-const outputTicketListTemplateText =
-`{{.TicketPathListHeader}}
+const outputTicketListTemplateText = `{{.TicketPathListHeader}}
 {{.OutputDirTicket}},{{.OutputDir}}
 `
 
@@ -162,6 +158,8 @@ vault:
     token: "{{.GetString "vault.child_token.token"}}"
     url: "{{.GetString "vault.url"}}"
 k8s:
+    frontend:
+        base: {{.GetString "k8s.frontend.base"}}
     app-exposer:
         base: {{.GetString "k8s.app-exposer.base"}}`
 
