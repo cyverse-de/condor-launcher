@@ -3,6 +3,7 @@ package jobs
 import (
 	"github.com/spf13/viper"
 	"gopkg.in/cyverse-de/model.v2"
+	"path/filepath"
 )
 
 // CondorJobSubmissionBuilder is responsible for writing out the iplant.cmd,
@@ -15,23 +16,32 @@ type CondorJobSubmissionBuilder struct {
 // Build is where the the iplant.cmd, config, and job files are actually written
 // out for submissions to the local HTCondor cluster.
 func (b CondorJobSubmissionBuilder) Build(submission *model.Job, dirPath string) (string, error) {
-	var err error
-
-	templateFields := OtherTemplateFields{TicketPathListHeader: b.cfg.GetString("tickets_path_list.file_identifier")}
+	templateFields := OtherTemplateFields{
+		PathListHeader: b.cfg.GetString("path_list.file_identifier"),
+		TicketPathListHeader: b.cfg.GetString("tickets_path_list.file_identifier"),
+	}
 	templateModel := TemplatesModel{
 		submission,
 		templateFields,
 	}
 
-	submission.OutputTicketFile, err = generateOutputTicketList(dirPath, templateModel)
+	outputTicketFile, err := generateOutputTicketList(dirPath, templateModel)
 	if err != nil {
 		return "", err
 	}
+	submission.OutputTicketFile = filepath.Base(outputTicketFile)
 
-	submission.InputTicketsFile, err = generateInputTicketList(dirPath, templateModel)
+	inputTicketsFile, err := generateInputTicketList(dirPath, templateModel)
 	if err != nil {
 		return "", err
 	}
+	submission.InputTicketsFile = filepath.Base(inputTicketsFile)
+
+	inputPathListFile, err := generateInputPathList(dirPath, templateModel)
+	if err != nil {
+		return "", err
+	}
+	submission.InputPathListFile = filepath.Base(inputPathListFile)
 
 	// Generate the submission file.
 	submitFilePath, err := generateFile(dirPath, "iplant.cmd", condorSubmissionTemplate, submission)
@@ -52,6 +62,15 @@ func (b CondorJobSubmissionBuilder) Build(submission *model.Job, dirPath string)
 	}
 
 	return submitFilePath, nil
+}
+
+func generateInputPathList(dirPath string, submission TemplatesModel) (string, error) {
+	if len(submission.FilterInputsWithoutTickets()) > 0 {
+		// Generate the input path list file.
+		return generateFile(dirPath, "input_path.list", inputPathListTemplate, submission)
+	}
+
+	return "", nil
 }
 
 func newCondorJobSubmissionBuilder(cfg *viper.Viper) JobSubmissionBuilder {

@@ -63,17 +63,33 @@ func (i *StepInput) Source() string {
 	return value
 }
 
+// Returns the porklock settings needed for a get command with an input path list.
+func (j *Job) InputSourceListArguments(sourceListPath string) []string {
+	args := []string{
+		"get",
+		"--user", j.Submitter,
+		"--source-list", sourceListPath,
+	}
+
+	for _, m := range MetadataArgs(j.FileMetadata).FileMetadataArguments() {
+		args = append(args, m)
+	}
+
+	return args
+}
+
 // Arguments returns the porklock settings needed for the input operation.
 func (i *StepInput) Arguments(username string, metadata []FileMetadata) []string {
-	path := i.IRODSPath()
 	args := []string{
 		"get",
 		"--user", username,
-		"--source", path,
+		"--source", i.IRODSPath(),
 	}
+
 	for _, m := range MetadataArgs(metadata).FileMetadataArguments() {
 		args = append(args, m)
 	}
+
 	return args
 }
 

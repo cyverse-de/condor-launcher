@@ -35,7 +35,7 @@
 
 [[constraint]]
   name = "github.com/cyverse-de/configurate"
-  version = "0.2.1"
+  version = "0.2.3"
 
 [[constraint]]
   branch = "master"
@@ -43,7 +43,7 @@
 
 [[constraint]]
   name = "gopkg.in/cyverse-de/model.v2"
-  version = "2.4.0"
+  version = "2.11.0"
 
 [[constraint]]
   name = "gopkg.in/cyverse-de/messaging.v4"
@@ -51,4 +51,4 @@
 
 [[constraint]]
   name = "gopkg.in/cyverse-de/job-templates.v3"
-  version = "3.0.0"
+  version = "3.6.0"

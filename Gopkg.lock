@@ -4,8 +4,8 @@
 [[projects]]
   name = "github.com/cyverse-de/configurate"
   packages = ["."]
-  revision = "c595102a4541f21108b7b8fe6a3d9858aaab79c7"
-  version = "0.2.1"
+  revision = "31a2137ff467c28589b49e6fad093c9b339b583d"
+  version = "0.2.3"
 
 [[projects]]
   name = "github.com/cyverse-de/go-events"
@@ -238,8 +238,8 @@
 [[projects]]
   name = "gopkg.in/cyverse-de/job-templates.v3"
   packages = ["."]
-  revision = "61c03aec1d8bcc8ea6121e3e1dcd1dd85b2f57d6"
-  version = "v3.5.5"
+  revision = "c88fd81a5f350b0879660138b77a1b38b926208f"
+  version = "v3.6.0"
 
 [[projects]]
   name = "gopkg.in/cyverse-de/messaging.v4"
@@ -250,8 +250,8 @@
 [[projects]]
   name = "gopkg.in/cyverse-de/model.v2"
   packages = ["."]
-  revision = "4aff5a8d5de9eb2eeb6b1e9c19dbc443c5e8b347"
-  version = "v2.10"
+  revision = "b6fae6c0f89c0d1ee641eef0016db8d54ee3ca7a"
+  version = "v2.11"
 
 [[projects]]
   branch = "v2"
@@ -262,6 +262,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "dc8d6ca62636045c1e65c324a8acd0123f271a4e74996e1bc170a16ab5bb730f"
+  inputs-digest = "91f4a7920284f9eb45e7de90c5d50528a35d65c2074db0f03f3e45cc6a6007ac"
   solver-name = "gps-cdcl"
   solver-version = 1

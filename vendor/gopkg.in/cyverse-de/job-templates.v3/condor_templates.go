@@ -9,6 +9,7 @@ import (
 )
 
 type OtherTemplateFields struct {
+	PathListHeader       string `json:"path_list_header"`
 	TicketPathListHeader string `json:"ticket_path_list_header"`
 }
 
@@ -23,6 +24,9 @@ var (
 
 	// condorJobConfigTemplate is the *template.Template for the job definition JSON
 	condorJobConfigTemplate *template.Template
+
+	// The *template.Template for a list of input files without download tickets.
+	inputPathListTemplate *template.Template
 
 	// The *template.Template for a list of input files with iRODS download tickets.
 	inputTicketListTemplate *template.Template
@@ -61,7 +65,16 @@ concurrency_limits = {{.UserIDForSubmission}}
 {{with $x := index .Steps 0}}+IpcExe = "{{$x.Component.Name}}"{{end}}
 {{with $x := index .Steps 0}}+IpcExePath = "{{$x.Component.Location}}"{{end}}
 should_transfer_files = YES
-transfer_input_files = iplant.cmd,config,job{{if .OutputTicketFile}},{{.OutputTicketFile}}{{end}}{{if .InputTicketsFile}},{{.InputTicketsFile}}{{end}}
+transfer_input_files = iplant.cmd,config,job
+{{- if .OutputTicketFile -}}
+,{{.OutputTicketFile}}
+{{- end}}
+{{- if .InputTicketsFile -}}
+,{{.InputTicketsFile}}
+{{- end}}
+{{- if .InputPathListFile -}}
+,{{.InputPathListFile}}
+{{- end}}
 transfer_output_files = workingvolume/logs/logs-stdout-output,workingvolume/logs/logs-stderr-output
 when_to_transfer_output = ON_EXIT_OR_EVICT
 notification = NEVER
@@ -87,6 +100,13 @@ vault:
     token: "{{.GetString "vault.child_token.token"}}"
     url: "{{.GetString "vault.url"}}"
 `
+
+// The text of the template for a list of input files without download tickets.
+const inputPathListTemplateText =
+`{{.PathListHeader}}
+{{range .FilterInputsWithoutTickets -}}
+{{.IRODSPath}}
+{{end}}`
 
 // The text of the template for a list of input files with iRODS download tickets.
 const inputTicketListTemplateText =
@@ -155,6 +175,11 @@ func init() {
 	condorJobConfigTemplate, err = template.New("job_config").Parse(condorJobConfigTemplateText)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse job config template text"))
+	}
+
+	inputPathListTemplate, err = template.New("input_path_list").Parse(inputPathListTemplateText)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to parse input path list template text"))
 	}
 
 	inputTicketListTemplate, err = template.New("input_tickets").Parse(inputTicketListTemplateText)

@@ -19,6 +19,11 @@ condor:
 db:
   uri: postgresql://guest:guest@dedb:5432/de?sslmode=disable
 
+external_irods:
+  host: "irods"
+  port: "1247"
+  user: "job"
+
 irods:
   user: "rods"
   pass: "notprod"
@@ -31,6 +36,12 @@ irods:
 porklock:
   image: discoenv/porklock
   tag: "dev"
+
+status_listener:
+  url: "http://job-status-listener/"
+
+path_list:
+    file_identifier: "# application/vnd.de.multi-input-path-list+csv; version=1"
 
 tickets_path_list:
   file_identifier: "# application/vnd.de.tickets-path-list+csv; version=1"

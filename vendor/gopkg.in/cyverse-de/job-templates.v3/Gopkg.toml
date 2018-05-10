@@ -38,4 +38,4 @@
 
 [[constraint]]
   name = "gopkg.in/cyverse-de/model.v2"
-  version = "2.5.0"
+  version = "2.11.0"
