@@ -85,18 +85,16 @@ func (b OSGJobSubmissionBuilder) Build(submission *model.Job, dirPath string) (s
 	}
 
 	// Generate the list of output tickets.
-	outputTicketFile, err := generateOutputTicketList(dirPath, templateModel)
+	submission.OutputTicketFile, err = generateOutputTicketList(dirPath, templateModel)
 	if err != nil {
 		return "", err
 	}
-	submission.OutputTicketFile = filepath.Base(outputTicketFile)
 
 	// Generate the list of input tickets.
-	inputTicketFile, err := generateInputTicketList(dirPath, templateModel)
+	submission.InputTicketsFile, err = generateInputTicketList(dirPath, templateModel)
 	if err != nil {
 		return "", err
 	}
-	submission.InputTicketsFile = filepath.Base(inputTicketFile)
 
 	// Generate the job configuration file.
 	configFile, err := b.generateConfigJSON(submission, dirPath)

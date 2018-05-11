@@ -16,6 +16,8 @@ type CondorJobSubmissionBuilder struct {
 // Build is where the the iplant.cmd, config, and job files are actually written
 // out for submissions to the local HTCondor cluster.
 func (b CondorJobSubmissionBuilder) Build(submission *model.Job, dirPath string) (string, error) {
+	var err error
+
 	templateFields := OtherTemplateFields{
 		PathListHeader: b.cfg.GetString("path_list.file_identifier"),
 		TicketPathListHeader: b.cfg.GetString("tickets_path_list.file_identifier"),
@@ -25,23 +27,20 @@ func (b CondorJobSubmissionBuilder) Build(submission *model.Job, dirPath string)
 		templateFields,
 	}
 
-	outputTicketFile, err := generateOutputTicketList(dirPath, templateModel)
+	submission.OutputTicketFile, err = generateOutputTicketList(dirPath, templateModel)
 	if err != nil {
 		return "", err
 	}
-	submission.OutputTicketFile = filepath.Base(outputTicketFile)
 
-	inputTicketsFile, err := generateInputTicketList(dirPath, templateModel)
+	submission.InputTicketsFile, err = generateInputTicketList(dirPath, templateModel)
 	if err != nil {
 		return "", err
 	}
-	submission.InputTicketsFile = filepath.Base(inputTicketsFile)
 
-	inputPathListFile, err := generateInputPathList(dirPath, templateModel)
+	submission.InputPathListFile, err = generateInputPathList(dirPath, templateModel)
 	if err != nil {
 		return "", err
 	}
-	submission.InputPathListFile = filepath.Base(inputPathListFile)
 
 	// Generate the submission file.
 	submitFilePath, err := generateFile(dirPath, "iplant.cmd", condorSubmissionTemplate, submission)
@@ -67,7 +66,8 @@ func (b CondorJobSubmissionBuilder) Build(submission *model.Job, dirPath string)
 func generateInputPathList(dirPath string, submission TemplatesModel) (string, error) {
 	if len(submission.FilterInputsWithoutTickets()) > 0 {
 		// Generate the input path list file.
-		return generateFile(dirPath, "input_path.list", inputPathListTemplate, submission)
+		filePath, err := generateFile(dirPath, "input_path.list", inputPathListTemplate, submission)
+		return filepath.Base(filePath), err
 	}
 
 	return "", nil

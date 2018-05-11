@@ -1,11 +1,15 @@
 package jobs
 
-import "bytes"
+import (
+	"bytes"
+	"path/filepath"
+)
 
 func generateOutputTicketList(dirPath string, submission TemplatesModel) (string, error) {
 	if submission.OutputDirTicket != "" {
 		// Generate the output ticket path list file.
-		return generateFile(dirPath, "output_ticket.list", outputTicketListTemplate, submission)
+		filePath, err := generateFile(dirPath, "output_ticket.list", outputTicketListTemplate, submission)
+		return filepath.Base(filePath), err
 	}
 
 	return "", nil
@@ -22,7 +26,8 @@ func generateOutputTicketListContents(submission TemplatesModel) (*bytes.Buffer,
 func generateInputTicketList(dirPath string, submission TemplatesModel) (string, error) {
 	if len(submission.FilterInputsWithTickets()) > 0 {
 		// Generate the input tickets path list file.
-		return generateFile(dirPath, "input_ticket.list", inputTicketListTemplate, submission)
+		filePath, err := generateFile(dirPath, "input_ticket.list", inputTicketListTemplate, submission)
+		return filepath.Base(filePath), err
 	}
 
 	return "", nil
