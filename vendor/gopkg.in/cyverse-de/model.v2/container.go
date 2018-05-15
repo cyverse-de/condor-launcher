@@ -65,6 +65,7 @@ type Container struct {
 	EntryPoint      string          `json:"entrypoint"`
 	WorkingDir      string          `json:"working_directory"`
 	Ports           []Ports         `json:"ports"`
+	SkipTmpMount    bool            `json:"skip_tmp_mount"`
 }
 
 // WorkingDirectory returns the container's working directory. Defaults to
