@@ -26,15 +26,6 @@ var uriTests = []testURI{
 		canon:    "amqp://user:pass@host:10000/vhost",
 	},
 
-	// this fails due to net/url not parsing pct-encoding in host
-	// testURI{url: "amqp://user%61:%61pass@ho%61st:10000/v%2Fhost",
-	//	username: "usera",
-	//	password: "apass",
-	//	host:     "hoast",
-	//	port:     10000,
-	//	vhost:    "v/host",
-	// },
-
 	{
 		url:      "amqp://",
 		username: defaultURI.Username,
@@ -169,7 +160,7 @@ var uriTests = []testURI{
 		url:      "amqp://[::1]",
 		username: defaultURI.Username,
 		password: defaultURI.Password,
-		host:     "[::1]",
+		host:     "::1",
 		port:     defaultURI.Port,
 		vhost:    defaultURI.Vhost,
 		canon:    "amqp://[::1]/",
@@ -179,10 +170,50 @@ var uriTests = []testURI{
 		url:      "amqp://[::1]:1000",
 		username: defaultURI.Username,
 		password: defaultURI.Password,
-		host:     "[::1]",
+		host:     "::1",
 		port:     1000,
 		vhost:    defaultURI.Vhost,
 		canon:    "amqp://[::1]:1000/",
+	},
+
+	{
+		url:      "amqp://[fe80::1]",
+		username: defaultURI.Username,
+		password: defaultURI.Password,
+		host:     "fe80::1",
+		port:     defaultURI.Port,
+		vhost:    defaultURI.Vhost,
+		canon:    "amqp://[fe80::1]/",
+	},
+
+	{
+		url:      "amqp://[fe80::1]",
+		username: defaultURI.Username,
+		password: defaultURI.Password,
+		host:     "fe80::1",
+		port:     defaultURI.Port,
+		vhost:    defaultURI.Vhost,
+		canon:    "amqp://[fe80::1]/",
+	},
+
+	{
+		url:      "amqp://[fe80::1%25en0]",
+		username: defaultURI.Username,
+		password: defaultURI.Password,
+		host:     "fe80::1%en0",
+		port:     defaultURI.Port,
+		vhost:    defaultURI.Vhost,
+		canon:    "amqp://[fe80::1%25en0]/",
+	},
+
+	{
+		url:      "amqp://[fe80::1]:5671",
+		username: defaultURI.Username,
+		password: defaultURI.Password,
+		host:     "fe80::1",
+		port:     5671,
+		vhost:    defaultURI.Vhost,
+		canon:    "amqp://[fe80::1]:5671/",
 	},
 
 	{
@@ -252,6 +283,12 @@ func TestURIScheme(t *testing.T) {
 
 	if _, err := ParseURI("amqps://example.com/"); err != nil {
 		t.Fatalf("Expected to parse amqps scheme, got %v", err)
+	}
+}
+
+func TestURIWhitespace(t *testing.T) {
+	if _, err := ParseURI("amqp://admin:PASSWORD@rabbitmq-service/ -http_port=8080"); err == nil {
+		t.Fatal("Expected to fail if URI contains whitespace")
 	}
 }
 

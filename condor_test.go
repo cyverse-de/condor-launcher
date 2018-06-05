@@ -12,7 +12,7 @@ import (
 
 	"github.com/streadway/amqp"
 	"gopkg.in/cyverse-de/messaging.v4"
-	"gopkg.in/cyverse-de/model.v2"
+	"gopkg.in/cyverse-de/model.v3"
 
 	"github.com/cyverse-de/condor-launcher/test"
 )

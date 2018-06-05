@@ -42,13 +42,13 @@
   name = "github.com/cyverse-de/vaulter"
 
 [[constraint]]
-  name = "gopkg.in/cyverse-de/model.v2"
-  version = "2.11.0"
-
-[[constraint]]
+  branch = "v4.1"
   name = "gopkg.in/cyverse-de/messaging.v4"
-  version = "4.0.0"
 
 [[constraint]]
-  name = "gopkg.in/cyverse-de/job-templates.v3"
-  version = "3.6.0"
+  name = "gopkg.in/cyverse-de/model.v3"
+  version = "3.0.0"
+
+[[constraint]]
+  name = "gopkg.in/cyverse-de/job-templates.v4"
+  version = "4.0.0"

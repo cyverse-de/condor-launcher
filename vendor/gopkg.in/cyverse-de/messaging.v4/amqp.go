@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"time"
 
-	"gopkg.in/cyverse-de/model.v2"
+	"gopkg.in/cyverse-de/model.v3"
 
 	"github.com/streadway/amqp"
 )
