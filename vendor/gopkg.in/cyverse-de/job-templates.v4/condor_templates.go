@@ -147,6 +147,9 @@ const interappsJobConfigTemplateText = `amqp:
     exchange:
         name: {{.GetString "amqp.exchange.name"}}
         type: {{.GetString "amqp.exchange.type"}}
+interapps:
+    proxy:
+        tag: "{{.GetString "interapps.proxy.tag"}}"
 irods:
     base: "{{.GetString "irods.base"}}"
 porklock:

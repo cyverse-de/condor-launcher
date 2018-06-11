@@ -237,16 +237,10 @@
   version = "v0.3.0"
 
 [[projects]]
-  name = "gopkg.in/cyverse-de/job-templates.v3"
-  packages = ["."]
-  revision = "4ab35f1041951e2f807e41366e991656963ecd6f"
-  version = "3.6.2"
-
-[[projects]]
   name = "gopkg.in/cyverse-de/job-templates.v4"
   packages = ["."]
-  revision = "17e1d95a3d5d76fde71044f9e1e1fc1c567647aa"
-  version = "v4"
+  revision = "fc1b7385bfbcab60754fac40ab94826e4c7be157"
+  version = "v4.0.1"
 
 [[projects]]
   branch = "v4.1"
@@ -275,6 +269,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9e87477f195c373540b69865a992cfda73e2fb06f95ad22b86e5e6b78ba926ab"
+  inputs-digest = "429901722ea48c12e94107943fee2f9ae89e6b610a9e6622b6d9ff9794e7aeba"
   solver-name = "gps-cdcl"
   solver-version = 1
