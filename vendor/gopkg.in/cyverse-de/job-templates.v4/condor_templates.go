@@ -164,7 +164,12 @@ k8s:
     frontend:
         base: {{.GetString "k8s.frontend.base"}}
     app-exposer:
-        base: {{.GetString "k8s.app-exposer.base"}}`
+        base: {{.GetString "k8s.app-exposer.base"}}
+        header: {{.GetString "k8s.app-exposer.header"}}
+    check-analysis-id:
+        header: {{.GetString "k8s.check-analysis-id.header"}}
+    get-analysis-id:
+        header: {{.GetString "k8s.get-analysis-id.header"}}`
 
 func init() {
 	var err error
