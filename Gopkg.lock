@@ -239,8 +239,8 @@
 [[projects]]
   name = "gopkg.in/cyverse-de/job-templates.v4"
   packages = ["."]
-  revision = "b9ad950215e90326658bc20214d10a4c7fee7775"
-  version = "v4.0.3"
+  revision = "2815bd9cf54381711c8f130be19f04891ef6d586"
+  version = "v4.0.4"
 
 [[projects]]
   branch = "v4.1"
