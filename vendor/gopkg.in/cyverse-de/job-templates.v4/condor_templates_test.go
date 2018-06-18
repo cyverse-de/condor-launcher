@@ -107,7 +107,7 @@ func TestGenerateCondorSubmit(t *testing.T) {
 	}
 	expected := `universe = vanilla
 executable = /usr/local/bin/road-runner
-rank = mips
+rank = 100 - TotalLoadAvg
 requirements = (HAS_CYVERSE_ROAD_RUNNER =?= True) && (HAS_HOST_MOUNTS =?= True)
 arguments = --config config --job job
 output = script-output.log
@@ -145,7 +145,7 @@ func TestGenerateCondorSubmitGroup(t *testing.T) {
 	}
 	expected := `universe = vanilla
 executable = /usr/local/bin/road-runner
-rank = mips
+rank = 100 - TotalLoadAvg
 requirements = (HAS_CYVERSE_ROAD_RUNNER =?= True) && (HAS_HOST_MOUNTS =?= True)
 arguments = --config config --job job
 output = script-output.log
@@ -182,7 +182,7 @@ func TestGenerateCondorSubmitNoVolumes(t *testing.T) {
 	}
 	expected := `universe = vanilla
 executable = /usr/local/bin/road-runner
-rank = mips
+rank = 100 - TotalLoadAvg
 requirements = (HAS_CYVERSE_ROAD_RUNNER =?= True)
 arguments = --config config --job job
 output = script-output.log

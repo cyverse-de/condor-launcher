@@ -47,7 +47,7 @@ var (
 // submission file.
 const condorSubmissionTemplateText = `universe = vanilla
 executable = /usr/local/bin/road-runner
-rank = mips
+rank = 100 - TotalLoadAvg
 requirements = (HAS_CYVERSE_ROAD_RUNNER =?= True){{ if .UsesVolumes }} && (HAS_HOST_MOUNTS =?= True){{ end }}
 arguments = --config config --job job
 output = script-output.log
@@ -119,7 +119,7 @@ const outputTicketListTemplateText = `{{.TicketPathListHeader}}
 
 const interappsSubmissionTemplateText = `universe = vanilla
 executable = /usr/local/bin/interapps-runner
-rank = mips{{ if .UsesVolumes }}
+rank = 100 - TotalLoadAvg{{ if .UsesVolumes }}
 requirements = (HAS_HOST_MOUNTS == True){{ end }}
 arguments = --config config --job job
 output = script-output.log
