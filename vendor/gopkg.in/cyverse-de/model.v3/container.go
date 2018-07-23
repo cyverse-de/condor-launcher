@@ -67,6 +67,7 @@ type Container struct {
 	WorkingDir      string          `json:"working_directory"`
 	Ports           []Ports         `json:"ports"`
 	SkipTmpMount    bool            `json:"skip_tmp_mount"`
+	UID             int             `json:"uid"`
 }
 
 // WorkingDirectory returns the container's working directory. Defaults to
