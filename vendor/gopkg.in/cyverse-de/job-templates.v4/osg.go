@@ -21,7 +21,8 @@ type OSGJobConfig struct {
 	IrodsHost        string   `json:"irods_host"`
 	IrodsPort        int      `json:"irods_port"`
 	IrodsJobUser     string   `json:"irods_job_user"`
-	IrodsUsername    string   `json:"irods_user"`
+	IrodsUsername    string   `json:"irods_user_name"`
+	IrodsZoneName    string   `json:"irods_zone_name"`
 	InputTicketList  string   `json:"input_ticket_list"`
 	OutputTicketList string   `json:"output_ticket_list"`
 	StatusUpdateURL  string   `json:"status_update_url"`
@@ -56,6 +57,7 @@ func (b OSGJobSubmissionBuilder) generateConfig(submission *model.Job) *OSGJobCo
 		IrodsPort:        b.cfg.GetInt("external_irods.port"),
 		IrodsJobUser:     submission.Submitter,
 		IrodsUsername:    b.cfg.GetString("external_irods.user"),
+		IrodsZoneName:    "",
 		InputTicketList:  submission.InputTicketsFile,
 		OutputTicketList: submission.OutputTicketFile,
 		StatusUpdateURL:  b.generateJobStatusUpdateURL(submission),
