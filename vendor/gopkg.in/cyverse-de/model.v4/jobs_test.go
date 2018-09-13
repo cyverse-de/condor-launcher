@@ -51,7 +51,6 @@ func _initconfig(t *testing.T) {
 	cfg.Set("condor.log_path", "/path/to/logs")
 	cfg.Set("condor.porklock_tag", "test")
 	cfg.Set("condor.filter_files", "foo,bar,baz,blippy")
-	cfg.Set("condor.request_disk", "0")
 }
 
 func inittestsFile(t *testing.T, filename string) *Job {

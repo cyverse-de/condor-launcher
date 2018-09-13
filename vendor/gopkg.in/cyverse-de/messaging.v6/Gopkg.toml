@@ -24,18 +24,15 @@
 #   go-tests = true
 #   unused-packages = true
 
-[[constraint]]
-  name = "github.com/pkg/errors"
-  version = "0.8.0"
 
 [[constraint]]
-  name = "github.com/cyverse-de/configurate"
-  version = "0.2.1"
+  branch = "master"
+  name = "github.com/streadway/amqp"
 
 [prune]
   go-tests = true
   unused-packages = true
 
 [[constraint]]
-  name = "gopkg.in/cyverse-de/model.v3"
-  version = "3.0.0"
+  name = "gopkg.in/cyverse-de/model.v4"
+  version = "4.0.0"

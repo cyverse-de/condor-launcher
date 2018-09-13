@@ -89,7 +89,6 @@ type Job struct {
 	OutputDir          string         `json:"output_dir"`         //the value parsed out of the JSON. Use OutputDirectory() instead.
 	OutputDirTicket    string         `json:"output_dir_ticket"`  //the write ticket for output_dir (assumes output_dir is set correctly).
 	OutputTicketFile   string         `json:"output_ticket_list"` //path to the file of the output dest with ticket (not from upstream).
-	RequestDisk        string         `json:"request_disk"`       //untested for now
 	RequestType        string         `json:"request_type"`
 	RunOnNFS           bool           `json:"run-on-nfs"`
 	SkipParentMetadata bool           `json:"skip-parent-meta"`
@@ -105,13 +104,11 @@ type Job struct {
 
 // New returns a pointer to a newly instantiated Job with NowDate set.
 // Accesses the following configuration settings:
-//  * condor.request_disk
 //  * condor.log_path
 //  * condor.filter_files
 //  * irods.base
 func New(cfg *viper.Viper) *Job {
 	n := time.Now().Format(nowfmt)
-	rq := cfg.GetString("condor.request_disk")
 	lp := cfg.GetString("condor.log_path")
 	var paths []string
 	filterFiles := cfg.GetString("condor.filter_files")
@@ -123,7 +120,6 @@ func New(cfg *viper.Viper) *Job {
 		NowDate:        n,
 		SubmissionDate: n,
 		ArchiveLogs:    true,
-		RequestDisk:    rq,
 		CondorLogPath:  lp,
 		FilterFiles:    paths,
 		IRODSBase:      irodsBase,

@@ -11,7 +11,7 @@ import (
 
 	"github.com/cyverse-de/configurate"
 	"github.com/spf13/viper"
-	"gopkg.in/cyverse-de/model.v3"
+	"gopkg.in/cyverse-de/model.v4"
 )
 
 func getTestConfigDir(t *testing.T) string {
@@ -62,7 +62,6 @@ func InitConfig(t *testing.T) *viper.Viper {
 	cfg.Set("condor.log_path", "test")
 	cfg.Set("condor.porklock_tag", "test")
 	cfg.Set("condor.filter_files", "foo,bar,baz,blippy")
-	cfg.Set("condor.request_disk", "0")
 	cfg.Set("condor.path_env_var", "/path/to/path")
 	cfg.Set("condor.condor_config", "/condor/config")
 	cfg.Set("vault.irods.child_token.token", "token")
@@ -115,7 +114,6 @@ error = script-error.log
 log = condor.log
 accounting_group = de
 accounting_group_user = test_this_is_a_test
-request_disk = 0
 +IpcUuid = "07b04ce2-7757-4b21-9e15-0b4c2f44be26"
 +IpcJobId = "generated_script"
 +IpcUsername = "test_this_is_a_test"
@@ -153,7 +151,6 @@ error = script-error.log
 log = condor.log
 accounting_group = foo
 accounting_group_user = test_this_is_a_test
-request_disk = 0
 +IpcUuid = "07b04ce2-7757-4b21-9e15-0b4c2f44be26"
 +IpcJobId = "generated_script"
 +IpcUsername = "test_this_is_a_test"
@@ -190,7 +187,6 @@ error = script-error.log
 log = condor.log
 accounting_group = de
 accounting_group_user = test_this_is_a_test
-request_disk = 0
 +IpcUuid = "07b04ce2-7757-4b21-9e15-0b4c2f44be26"
 +IpcJobId = "generated_script"
 +IpcUsername = "test_this_is_a_test"

@@ -237,16 +237,16 @@
   version = "v0.3.0"
 
 [[projects]]
-  name = "gopkg.in/cyverse-de/job-templates.v4"
+  name = "gopkg.in/cyverse-de/job-templates.v5"
   packages = ["."]
-  revision = "30091a6dec7ece40fc5e0e3bd751bbd9213c199d"
-  version = "v4.0.6"
+  revision = "4c77d701010d6863a967d952444c3ee39f306ef4"
+  version = "v5.0"
 
 [[projects]]
-  branch = "v4.1"
-  name = "gopkg.in/cyverse-de/messaging.v4"
+  name = "gopkg.in/cyverse-de/messaging.v6"
   packages = ["."]
-  revision = "44770d49ac4d5fc4bccb377096d95bfa0ee7de7c"
+  revision = "75e35ff8f1eb7027ead7ac9f1fdb5d0a51ed2bf4"
+  version = "v6"
 
 [[projects]]
   name = "gopkg.in/cyverse-de/model.v2"
@@ -255,10 +255,10 @@
   version = "v2.12"
 
 [[projects]]
-  name = "gopkg.in/cyverse-de/model.v3"
+  name = "gopkg.in/cyverse-de/model.v4"
   packages = ["."]
-  revision = "bef877bd81751e70c843601dbaf10b90a49db65f"
-  version = "v3.1"
+  revision = "36b13d37bb4126f4b525a393512b0f420fea5ab4"
+  version = "v4.0"
 
 [[projects]]
   branch = "v2"
@@ -269,6 +269,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "429901722ea48c12e94107943fee2f9ae89e6b610a9e6622b6d9ff9794e7aeba"
+  inputs-digest = "1dc68e00ce2f26f578ca2309ca4856b6a060841c18307dbc5a5786186352d6c6"
   solver-name = "gps-cdcl"
   solver-version = 1

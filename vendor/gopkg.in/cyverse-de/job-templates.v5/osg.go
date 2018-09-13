@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/viper"
-	"gopkg.in/cyverse-de/model.v3"
+	"gopkg.in/cyverse-de/model.v4"
 )
 
 // OSGJobSubmissionBuilder is responsible for writing out the iplant.cmd, config.json,

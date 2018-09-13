@@ -5,7 +5,7 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
-	"gopkg.in/cyverse-de/model.v3"
+	"gopkg.in/cyverse-de/model.v4"
 )
 
 type OtherTemplateFields struct {
@@ -55,7 +55,6 @@ error = script-error.log
 log = condor.log
 accounting_group = {{if .Group}}{{.Group}}{{else}}de{{end}}
 accounting_group_user = {{.Submitter}}
-request_disk = {{.RequestDisk}}
 +IpcUuid = "{{.InvocationID}}"
 +IpcJobId = "generated_script"
 +IpcUsername = "{{.Submitter}}"
@@ -127,7 +126,6 @@ error = script-error.log
 log = condor.log
 accounting_group = {{if .Group}}{{.Group}}{{else}}de{{end}}
 accounting_group_user = {{.Submitter}}
-request_disk = {{.RequestDisk}}
 +IpcUuid = "{{.InvocationID}}"
 +IpcJobId = "generated_script"
 +IpcUsername = "{{.Submitter}}"

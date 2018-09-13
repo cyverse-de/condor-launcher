@@ -29,12 +29,12 @@ import (
 	"github.com/cyverse-de/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/cyverse-de/messaging.v4"
-	"gopkg.in/cyverse-de/model.v3"
+	"gopkg.in/cyverse-de/messaging.v6"
+	"gopkg.in/cyverse-de/model.v4"
 
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
-	jobs "gopkg.in/cyverse-de/job-templates.v4"
+	jobs "gopkg.in/cyverse-de/job-templates.v5"
 )
 
 var log = logrus.WithFields(logrus.Fields{
@@ -226,10 +226,6 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 			rejectDelivery(delivery, requeueOnErr, "failed to Reject amqp Launch request delivery")
 
 			return
-		}
-
-		if req.Job.RequestDisk == "" {
-			req.Job.RequestDisk = "0"
 		}
 
 		switch req.Command {
