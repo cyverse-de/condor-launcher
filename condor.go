@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/cyverse-de/configurate"
-	"github.com/cyverse-de/go-events/ping"
 	"github.com/cyverse-de/logcabin"
 	"github.com/cyverse-de/version"
 	"github.com/pkg/errors"
@@ -63,9 +62,6 @@ func rejectDelivery(delivery amqp.Delivery, requeue bool, logMsgOnErr string) {
 		log.Error(errors.Wrap(err, logMsgOnErr))
 	}
 }
-
-const pingKey = "events.condor-launcher.ping"
-const pongKey = "events.condor-launcher.pong"
 
 // Messenger defines an interface for handling AMQP operations. This is the
 // subset of functionality needed by job-status-recorder.
@@ -188,27 +184,6 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 	log.Infof("Condor job id is %s\n", id)
 
 	return id, err
-}
-
-// handleEvents accepts an amqp message, acks it, and delegates handling it to
-// another function.
-func (cl *CondorLauncher) routeEvents(delivery amqp.Delivery) {
-	ackDelivery(delivery, "failed to ack amqp event delivery")
-
-	switch delivery.RoutingKey {
-	case pingKey:
-		log.Infoln("Received ping")
-		out, err := json.Marshal(&ping.Pong{})
-		if err != nil {
-			log.Errorf("%+v\n", errors.Wrap(err, "failed to marshal pong response"))
-		}
-		log.Infoln("Sent pong")
-		if err = cl.client.Publish(pongKey, out); err != nil {
-			log.Errorf("%+v\n", errors.Wrap(err, "failed to publish pong response"))
-		}
-	default:
-		log.Errorf("%+v\n", fmt.Errorf("unhandled event with routing key of %s", delivery.RoutingKey))
-	}
 }
 
 // handleLaunchRequests triggers Condor jobs in response to launch request messages.
@@ -440,15 +415,6 @@ func main() {
 		messaging.StopRequestKey("*"),
 		launcher.stopHandler(condorPath, condorConfig),
 		cfg.GetInt("amqp.prefetch.stops"),
-	)
-
-	launcher.client.AddConsumer(
-		exchangeName,
-		exchangeType,
-		"condor_launcher_events",
-		"events.condor-launcher.*",
-		launcher.routeEvents,
-		cfg.GetInt("amqp.prefetch.events"),
 	)
 
 	// Accept and handle messages sent out with the jobs.launches routing key.

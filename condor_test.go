@@ -10,7 +10,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/streadway/amqp"
 	"gopkg.in/cyverse-de/messaging.v6"
 	"gopkg.in/cyverse-de/model.v4"
 
@@ -170,43 +169,4 @@ func (m *MockMessenger) SetupPublishing(exchange string) error {
 
 	m.publishTo = append(m.publishTo, exchange)
 	return nil
-}
-
-func TestHandleEvents(t *testing.T) {
-	cfg := test.InitConfig(t)
-	test.InitPath(t)
-	client := &MockMessenger{
-		publishedMessages: make([]MockMessage, 0),
-	}
-	filesystem := newtsys()
-	launcher := New(cfg, client, filesystem, "condor_submit", "condor_rm")
-	delivery := amqp.Delivery{
-		RoutingKey: "events.condor-launcher.ping",
-	}
-	launcher.routeEvents(delivery)
-	mm := launcher.client.(*MockMessenger)
-	if len(mm.publishedMessages) != 1 {
-		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))
-	}
-	if mm.publishedMessages[0].key != pongKey {
-		t.Errorf("routing key was %s instead of %s", mm.publishedMessages[0].key, pongKey)
-	}
-}
-
-func TestHandleBadEvents(t *testing.T) {
-	cfg := test.InitConfig(t)
-	test.InitPath(t)
-	client := &MockMessenger{
-		publishedMessages: make([]MockMessage, 0),
-	}
-	filesystem := newtsys()
-	launcher := New(cfg, client, filesystem, "condor_submit", "condor_rm")
-	delivery := amqp.Delivery{
-		RoutingKey: "events.condor-launcher.pinadsfasdfg",
-	}
-	launcher.routeEvents(delivery)
-	mm := launcher.client.(*MockMessenger)
-	if len(mm.publishedMessages) != 0 {
-		t.Errorf("number of published messages was %d instead of 1", len(mm.publishedMessages))
-	}
 }
