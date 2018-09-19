@@ -8,11 +8,6 @@
   version = "0.2.3"
 
 [[projects]]
-  name = "github.com/cyverse-de/go-events"
-  packages = ["ping"]
-  revision = "85bdb8d67e312eb3a7a8d0bf1749509d0fd062ea"
-
-[[projects]]
   name = "github.com/cyverse-de/logcabin"
   packages = ["."]
   revision = "fa67165f94282d904f7f908ca2edaa7e941f7557"
@@ -44,11 +39,6 @@
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   revision = "f12c6236fe7b5cf6bcf30e5935d08cb079d78334"
-
-[[projects]]
-  name = "github.com/golang/protobuf"
-  packages = ["proto"]
-  revision = "87c000235d3d852c1628dc9490cd21ab36a7d69f"
 
 [[projects]]
   branch = "master"
@@ -269,6 +259,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1dc68e00ce2f26f578ca2309ca4856b6a060841c18307dbc5a5786186352d6c6"
+  inputs-digest = "7da95bc93cc609b6408f436fc18ccc6780c08d173c8451691f2fc3dd0ab378ba"
   solver-name = "gps-cdcl"
   solver-version = 1

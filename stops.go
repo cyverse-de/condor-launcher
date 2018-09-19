@@ -72,15 +72,15 @@ func ExecCondorRm(invocationID, condorPath, condorConfig string) ([]byte, error)
 	}
 
 	// condor_rm -constraint 'IpcUuid =?= "<uuid>"'
-	constraintIpcUuid := fmt.Sprintf(`IpcUuid =?= "%s"`, invocationID)
-	cmd := exec.Command(crPath, "-constraint", constraintIpcUuid)
+	contraintIpcUUID := fmt.Sprintf(`IpcUuid =?= "%s"`, invocationID)
+	cmd := exec.Command(crPath, "-constraint", contraintIpcUUID)
 	cmd.Env = []string{
 		fmt.Sprintf("PATH=%s", condorPath),
 		fmt.Sprintf("CONDOR_CONFIG=%s", condorConfig),
 	}
 	output, err = cmd.CombinedOutput()
 	if err != nil {
-		return output, errors.Wrapf(err, "failed to get the output of '%s %s %s'", crPath, "-constraint", constraintIpcUuid)
+		return output, errors.Wrapf(err, "failed to get the output of '%s %s %s'", crPath, "-constraint", contraintIpcUUID)
 	}
 	return output, nil
 }

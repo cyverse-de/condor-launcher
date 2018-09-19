@@ -81,7 +81,6 @@ type CondorLauncher struct {
 	client       Messenger
 	fs           fsys
 	v            VaultOperator
-	cubbyMount   string // the path to where the cubbyhole backend is rooted in Vault
 	condorSubmit string //path to the condor_submit executable
 	condorRm     string // path to the condor_rm executable
 }
@@ -241,7 +240,7 @@ func (cl *CondorLauncher) handleLaunchRequests(condorPath, condorConfig string) 
 	}
 }
 
-func (launcher *CondorLauncher) stopJob(invocationID, condorPath, condorConfig string) error {
+func (cl *CondorLauncher) stopJob(invocationID, condorPath, condorConfig string) error {
 	var (
 		condorRMOutput []byte
 		err            error
@@ -253,19 +252,19 @@ func (launcher *CondorLauncher) stopJob(invocationID, condorPath, condorConfig s
 		return err
 	}
 
-	fauxJob := model.New(launcher.cfg)
+	fauxJob := model.New(cl.cfg)
 	fauxJob.InvocationID = invocationID
 	update := &messaging.UpdateMessage{
 		Job:     fauxJob,
 		State:   messaging.FailedState,
 		Message: "Job was killed",
 	}
-	if err = launcher.client.PublishJobUpdate(update); err != nil {
+	if err = cl.client.PublishJobUpdate(update); err != nil {
 		log.Errorf("%+v\n", errors.Wrap(err, "failed to publish job update for a stopped job"))
 	}
 	log.Infof("condor_rm output for job %s:\n%s", invocationID, condorRMOutput)
 
-	launcher.client.DeleteQueue(messaging.StopQueueName(invocationID))
+	cl.client.DeleteQueue(messaging.StopQueueName(invocationID))
 
 	return nil
 }

@@ -10,7 +10,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"gopkg.in/cyverse-de/messaging.v6"
 	"gopkg.in/cyverse-de/model.v4"
 
 	"github.com/cyverse-de/condor-launcher/test"
@@ -113,60 +112,4 @@ func TestLaunch(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-}
-
-type MockConsumer struct {
-	exchange     string
-	exchangeType string
-	queue        string
-	key          string
-	handler      messaging.MessageHandler
-}
-
-type MockMessage struct {
-	key string
-	msg []byte
-}
-
-type MockMessenger struct {
-	consumers         []MockConsumer
-	publishedMessages []MockMessage
-	publishTo         []string
-	publishError      bool
-}
-
-func (m *MockMessenger) Close()                        {}
-func (m *MockMessenger) Listen()                       {}
-func (m *MockMessenger) DeleteQueue(name string) error { return nil }
-
-func (m *MockMessenger) AddConsumer(exchange, exchangeType, queue, key string, handler messaging.MessageHandler, prefetchCount int) {
-	m.consumers = append(m.consumers, MockConsumer{
-		exchange:     exchange,
-		exchangeType: exchangeType,
-		queue:        queue,
-		key:          key,
-		handler:      handler,
-	})
-}
-
-func (m *MockMessenger) Publish(key string, msg []byte) error {
-	if m.publishError {
-		return errors.New("publish error")
-	}
-	m.publishedMessages = append(m.publishedMessages, MockMessage{key: key, msg: msg})
-	return nil
-}
-
-func (m *MockMessenger) PublishJobUpdate(update *messaging.UpdateMessage) error {
-	if m.publishError {
-		return errors.New("publish error")
-	}
-	m.publishedMessages = append(m.publishedMessages, MockMessage{key: "foo", msg: []byte(update.Message)})
-	return nil
-}
-
-func (m *MockMessenger) SetupPublishing(exchange string) error {
-
-	m.publishTo = append(m.publishTo, exchange)
-	return nil
 }
