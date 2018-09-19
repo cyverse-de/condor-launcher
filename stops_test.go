@@ -15,35 +15,11 @@ import (
 	"github.com/streadway/amqp"
 )
 
-var client *messaging.Client
-
 func shouldrun() bool {
 	if os.Getenv("RUN_INTEGRATION_TESTS") != "" {
 		return true
 	}
 	return false
-}
-
-func GetClient(t *testing.T) *messaging.Client {
-	var err error
-	if client != nil {
-		return client
-	}
-	client, err = messaging.NewClient(messagingURI(), false)
-	if err != nil {
-		t.Error(err)
-	}
-	client.SetupPublishing(exchangeName())
-	go client.Listen()
-	return client
-}
-
-func messagingURI() string {
-	return "amqp://guest:guest@rabbit:5672/%2fde"
-}
-
-func exchangeName() string {
-	return "de"
 }
 
 var (

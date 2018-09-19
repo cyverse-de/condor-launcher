@@ -26,6 +26,7 @@ func getTestFilePath(t *testing.T, filename string) string {
 	return path.Join(getTestConfigDir(t), filename)
 }
 
+// InitPath sets up the PATH environment variable for the tests.
 func InitPath(t *testing.T) {
 	dir := getTestConfigDir(t)
 	path := os.Getenv("PATH")
@@ -42,6 +43,7 @@ func InitPath(t *testing.T) {
 	}
 }
 
+// InitConfig sets up a config object for use in the tests.
 func InitConfig(t *testing.T) *viper.Viper {
 
 	// Load the test configuration.
@@ -72,6 +74,7 @@ func InitConfig(t *testing.T) *viper.Viper {
 	return cfg
 }
 
+// InitTestsFromFile loads test information from a file.
 func InitTestsFromFile(t *testing.T, cfg *viper.Viper, filename string) *model.Job {
 
 	// Load the job submission information from the file.
@@ -93,6 +96,8 @@ func InitTestsFromFile(t *testing.T, cfg *viper.Viper, filename string) *model.J
 	return s
 }
 
+// InitTests is basically an alias for InitTestsFromFile that defaults to
+// loading info from test_submission.json.
 func InitTests(t *testing.T, cfg *viper.Viper) *model.Job {
 	return InitTestsFromFile(t, cfg, "test_submission.json")
 }
