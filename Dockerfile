@@ -9,7 +9,7 @@ ENTRYPOINT ["condor-launcher"]
 CMD ["--help"]
 
 ARG git_commit=unknown
-ARG version="2.9.0"
+ARG version="2.20.0"
 ARG descriptive_version=unknown
 
 LABEL org.cyverse.git-ref="$git_commit"
