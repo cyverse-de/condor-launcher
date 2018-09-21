@@ -685,6 +685,36 @@ func TestFinalOutputArguments(t *testing.T) {
 	_inittests(t, false)
 }
 
+func TestCPURequest(t *testing.T) {
+	s := inittests(t)
+	cpu := s.CPURequest()
+	var expected float32
+	expected = 0
+	if cpu != expected {
+		t.Errorf("CPU request was %f, not %f", cpu, expected)
+	}
+}
+
+func TestMemoryRequest(t *testing.T) {
+	s := inittests(t)
+	mem := s.MemoryRequest()
+	var expected int64
+	expected = 2048
+	if mem != expected {
+		t.Errorf("Memory request was %d, not %d", mem, expected)
+	}
+}
+
+func TestDiskRequest(t *testing.T) {
+	s := inittests(t)
+	disk := s.DiskRequest()
+	var expected int64
+	expected = 0
+	if disk != expected {
+		t.Errorf("Disk request was %d, not %d", disk, expected)
+	}
+}
+
 func TestExtractJobID(t *testing.T) {
 	testData := []byte(`1000 job(s) submitted to cluster 100000000.0000.`)
 	actual := ExtractJobID(testData)

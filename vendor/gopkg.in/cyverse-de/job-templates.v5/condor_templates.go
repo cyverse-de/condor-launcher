@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"fmt"
 	"log"
 	"text/template"
 
@@ -48,7 +49,10 @@ var (
 const condorSubmissionTemplateText = `universe = vanilla
 executable = /usr/local/bin/road-runner
 rank = 100 - TotalLoadAvg
-requirements = (HAS_CYVERSE_ROAD_RUNNER =?= True){{ if .UsesVolumes }} && (HAS_HOST_MOUNTS =?= True){{ end }}
+requirements = HasDocker && (HAS_CYVERSE_ROAD_RUNNER =?= True){{ if .UsesVolumes }} && (HAS_HOST_MOUNTS =?= True){{ end }}{{- if .CPURequest }}
+request_cpus = {{ .CPURequest }}{{ end }}{{- if .MemoryRequest }}
+request_memory = {{ condorBytes .MemoryRequest }}{{ end }}{{- if .DiskRequest }}
+request_disk = {{ condorBytes .DiskRequest }}{{ end }}
 arguments = --config config --job job
 output = script-output.log
 error = script-error.log
@@ -118,8 +122,11 @@ const outputTicketListTemplateText = `{{.TicketPathListHeader}}
 
 const interappsSubmissionTemplateText = `universe = vanilla
 executable = /usr/local/bin/interapps-runner
-rank = 100 - TotalLoadAvg{{ if .UsesVolumes }}
-requirements = (HAS_HOST_MOUNTS == True){{ end }}
+rank = 100 - TotalLoadAvg
+requirements = HasDocker && (HAS_CYVERSE_ROAD_RUNNER =?= True){{ if .UsesVolumes }} && (HAS_HOST_MOUNTS =?= True){{ end }}
+{{ if .CPURequest }}request_cpus = {{ .CPURequest }}{{ end }}
+{{ if .MemoryRequest }}request_memory = {{ condorBytes .MemoryRequest }}{{ end }}
+{{ if .DiskRequest }}request_disk = {{ condorBytes .DiskRequest }}{{ end }}
 arguments = --config config --job job
 output = script-output.log
 error = script-error.log
@@ -169,10 +176,42 @@ k8s:
     get-analysis-id:
         header: {{.GetString "k8s.get-analysis-id.header"}}`
 
+// bytesPerKiB is 2^10
+const bytesPerKiB = 1024
+
+// bytesPerMiB is 2^20
+const bytesPerMiB = 1048576
+
+// CondorBytes formats a number of bytes to a condor format (rounding up to the nearest KiB until it's at least 1MiB, then rounding up to the nearest MiB)
+func CondorBytes(bytes int64) string {
+	if bytes < bytesPerKiB {
+		return "1KB"
+	}
+
+	if bytes < bytesPerMiB {
+		kb := bytes / bytesPerKiB
+		if bytes%bytesPerKiB > 0 {
+			kb = kb + 1
+		}
+		return fmt.Sprintf("%dKB", kb)
+	}
+
+	mb := bytes / bytesPerMiB
+	if bytes%bytesPerMiB > 0 {
+		mb = mb + 1
+	}
+
+	return fmt.Sprintf("%dMB", mb)
+}
+
 func init() {
 	var err error
 
-	condorSubmissionTemplate, err = template.New("condor_submit").Parse(condorSubmissionTemplateText)
+	funcMap := template.FuncMap{
+		"condorBytes": CondorBytes,
+	}
+
+	condorSubmissionTemplate, err = template.New("condor_submit").Funcs(funcMap).Parse(condorSubmissionTemplateText)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse submission template text"))
 	}
@@ -195,7 +234,7 @@ func init() {
 		log.Fatal(errors.Wrap(err, "failed to parse output ticket template text"))
 	}
 
-	interappsSubmissionTemplate, err = template.New("interapps_condor_submit").Parse(interappsSubmissionTemplateText)
+	interappsSubmissionTemplate, err = template.New("interapps_condor_submit").Funcs(funcMap).Parse(interappsSubmissionTemplateText)
 	if err != nil {
 		log.Fatal(errors.Wrap(err, "failed to parse interapps submission template text"))
 	}

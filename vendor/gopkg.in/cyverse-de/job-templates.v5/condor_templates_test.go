@@ -107,7 +107,10 @@ func TestGenerateCondorSubmit(t *testing.T) {
 	expected := `universe = vanilla
 executable = /usr/local/bin/road-runner
 rank = 100 - TotalLoadAvg
-requirements = (HAS_CYVERSE_ROAD_RUNNER =?= True) && (HAS_HOST_MOUNTS =?= True)
+requirements = HasDocker && (HAS_CYVERSE_ROAD_RUNNER =?= True) && (HAS_HOST_MOUNTS =?= True)
+request_cpus = 4.5
+request_memory = 2048MB
+request_disk = 2048MB
 arguments = --config config --job job
 output = script-output.log
 error = script-error.log
@@ -144,7 +147,10 @@ func TestGenerateCondorSubmitGroup(t *testing.T) {
 	expected := `universe = vanilla
 executable = /usr/local/bin/road-runner
 rank = 100 - TotalLoadAvg
-requirements = (HAS_CYVERSE_ROAD_RUNNER =?= True) && (HAS_HOST_MOUNTS =?= True)
+requirements = HasDocker && (HAS_CYVERSE_ROAD_RUNNER =?= True) && (HAS_HOST_MOUNTS =?= True)
+request_cpus = 4.5
+request_memory = 2048MB
+request_disk = 2048MB
 arguments = --config config --job job
 output = script-output.log
 error = script-error.log
@@ -180,7 +186,8 @@ func TestGenerateCondorSubmitNoVolumes(t *testing.T) {
 	expected := `universe = vanilla
 executable = /usr/local/bin/road-runner
 rank = 100 - TotalLoadAvg
-requirements = (HAS_CYVERSE_ROAD_RUNNER =?= True)
+requirements = HasDocker && (HAS_CYVERSE_ROAD_RUNNER =?= True)
+request_memory = 2KB
 arguments = --config config --job job
 output = script-output.log
 error = script-error.log
@@ -203,5 +210,28 @@ queue
 `
 	if actual.String() != expected {
 		t.Errorf("GenerateCondorSubmit() returned:\n\n%s\n\ninstead of:\n\n%s", actual, expected)
+	}
+}
+
+func TestCondorBytes(t *testing.T) {
+	cases := []struct {
+		input  int64
+		output string
+	}{
+		{input: 400, output: "1KB"},
+		{input: 1024, output: "1KB"},
+		{input: 1000000, output: "977KB"},
+		{input: 1048576, output: "1MB"},
+		{input: 1000000000, output: "954MB"},
+		{input: 16000000000, output: "15259MB"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%d", c.input), func(t *testing.T) {
+			output := CondorBytes(c.input)
+			if output != c.output {
+				t.Errorf("Got %s from input %d, expected %s", output, c.input, c.output)
+			}
+		})
 	}
 }

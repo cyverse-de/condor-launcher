@@ -151,16 +151,16 @@ func sanitize(s string) string {
 
 // Sanitize makes sure the fields in a submission are ready to be used in things
 // like file names.
-func (s *Job) Sanitize() {
-	s.Submitter = sanitize(s.Submitter)
+func (job *Job) Sanitize() {
+	job.Submitter = sanitize(job.Submitter)
 
-	if s.Type == "" {
-		s.Type = "analysis"
+	if job.Type == "" {
+		job.Type = "analysis"
 	}
 
-	s.Name = sanitize(s.Name)
+	job.Name = sanitize(job.Name)
 
-	for i, step := range s.Steps {
+	for i, step := range job.Steps {
 		step.Component.Container.Image.Name = strings.TrimSpace(step.Component.Container.Image.Name)
 		step.Component.Container.Image.Tag = strings.TrimSpace(step.Component.Container.Image.Tag)
 		step.Component.Container.Image.OSGImagePath = strings.TrimSpace(step.Component.Container.Image.OSGImagePath)
@@ -174,7 +174,7 @@ func (s *Job) Sanitize() {
 			vf.ContainerPath = strings.TrimSpace(vf.ContainerPath)
 			step.Component.Container.VolumesFrom[j] = vf
 		}
-		s.Steps[i] = step
+		job.Steps[i] = step
 	}
 }
 
@@ -182,59 +182,59 @@ func (s *Job) Sanitize() {
 // doesn't specify an output directory.  Some types of jobs, for example
 // Foundational API jobs, include a timestamp in the job name, so a timestamp
 // will not be appended to the directory name in those cases.
-func (s *Job) DirectoryName() string {
-	if validName.MatchString(s.Name) {
-		return s.Name
+func (job *Job) DirectoryName() string {
+	if validName.MatchString(job.Name) {
+		return job.Name
 	}
-	return fmt.Sprintf("%s-%s", s.Name, s.NowDate)
+	return fmt.Sprintf("%s-%s", job.Name, job.NowDate)
 }
 
 // UserIDForSubmission returns the cleaned up user ID for use in the iplant.cmd file. This
 // is dumb. Very, very dumb.
-func (s *Job) UserIDForSubmission() string {
+func (job *Job) UserIDForSubmission() string {
 	var retval string
-	if s.UserID == "" {
+	if job.UserID == "" {
 		hash := sha256.New()
-		hash.Write([]byte(s.Submitter))
+		hash.Write([]byte(job.Submitter))
 		md := hash.Sum(nil)
 		retval = hex.EncodeToString(md)
 	} else {
-		retval = s.UserID
+		retval = job.UserID
 	}
 	return fmt.Sprintf("_%s", strings.Replace(retval, "-", "", -1))
 }
 
 // CondorLogDirectory returns the path to the directory containing condor logs on the
 // submission node. This a computed value, so it isn't in the struct.
-func (s *Job) CondorLogDirectory() string {
-	return fmt.Sprintf("%s/", path.Join(s.CondorLogPath, s.Submitter, s.DirectoryName()))
+func (job *Job) CondorLogDirectory() string {
+	return fmt.Sprintf("%s/", path.Join(job.CondorLogPath, job.Submitter, job.DirectoryName()))
 }
 
 // IRODSConfig returns the path to iRODS config inside the working directory.
-func (s *Job) IRODSConfig() string {
+func (job *Job) IRODSConfig() string {
 	return path.Join("logs", "irods-config")
 }
 
 // OutputDirectory returns the path to the output directory in iRODS. It's
 // computed, which is why it isn't in the struct. Use this instead of directly
 // accessing the OutputDir field.
-func (s *Job) OutputDirectory() string {
-	if s.OutputDir == "" {
-		return path.Join(s.IRODSBase, s.Submitter, "analyses", s.DirectoryName())
-	} else if s.OutputDir != "" && s.CreateOutputSubdir {
-		return path.Join(s.OutputDir, s.DirectoryName())
-	} else if s.OutputDir != "" && !s.CreateOutputSubdir {
-		return strings.TrimSuffix(s.OutputDir, "/")
+func (job *Job) OutputDirectory() string {
+	if job.OutputDir == "" {
+		return path.Join(job.IRODSBase, job.Submitter, "analyses", job.DirectoryName())
+	} else if job.OutputDir != "" && job.CreateOutputSubdir {
+		return path.Join(job.OutputDir, job.DirectoryName())
+	} else if job.OutputDir != "" && !job.CreateOutputSubdir {
+		return strings.TrimSuffix(job.OutputDir, "/")
 	}
 	//probably won't ever reach this, but just in case...
-	return path.Join(s.IRODSBase, s.Submitter, "analyses", s.DirectoryName())
+	return path.Join(job.IRODSBase, job.Submitter, "analyses", job.DirectoryName())
 }
 
 // DataContainers returns a list of VolumesFrom that describe the data
 // containers associated with the job submission.
-func (s *Job) DataContainers() []VolumesFrom {
+func (job *Job) DataContainers() []VolumesFrom {
 	var vfs []VolumesFrom
-	for _, step := range s.Steps {
+	for _, step := range job.Steps {
 		for _, vf := range step.Component.Container.VolumesFrom {
 			vfs = append(vfs, vf)
 		}
@@ -244,9 +244,9 @@ func (s *Job) DataContainers() []VolumesFrom {
 
 // ContainerImages returns a []ContainerImage of all of the images associated
 // with this submission.
-func (s *Job) ContainerImages() []ContainerImage {
+func (job *Job) ContainerImages() []ContainerImage {
 	var ci []ContainerImage
-	for _, step := range s.Steps {
+	for _, step := range job.Steps {
 		ci = append(ci, step.Component.Container.Image)
 	}
 	return ci
@@ -254,9 +254,9 @@ func (s *Job) ContainerImages() []ContainerImage {
 
 // Inputs returns all of the StepInputs associated with the submission,
 // regardless of what step they're associated with.
-func (s *Job) Inputs() []StepInput {
+func (job *Job) Inputs() []StepInput {
 	var inputs []StepInput
-	for _, step := range s.Steps {
+	for _, step := range job.Steps {
 		for _, input := range step.Config.Inputs {
 			inputs = append(inputs, input)
 		}
@@ -266,9 +266,9 @@ func (s *Job) Inputs() []StepInput {
 
 // Outputs returns all of the StepOutputs associated with the submission,
 // regardless of what step they're associated with.
-func (s *Job) Outputs() []StepOutput {
+func (job *Job) Outputs() []StepOutput {
 	var outputs []StepOutput
-	for _, step := range s.Steps {
+	for _, step := range job.Steps {
 		for _, output := range step.Config.Outputs {
 			outputs = append(outputs, output)
 		}
@@ -277,22 +277,22 @@ func (s *Job) Outputs() []StepOutput {
 }
 
 // ExcludeArguments returns a list of paths that should not upload as outputs.
-func (s *Job) ExcludeArguments() []string {
+func (job *Job) ExcludeArguments() []string {
 	var paths []string
-	for _, input := range s.Inputs() {
+	for _, input := range job.Inputs() {
 		if !input.Retain && input.Value != "" {
 			paths = append(paths, input.Source())
 		}
 	}
-	for _, output := range s.Outputs() {
+	for _, output := range job.Outputs() {
 		if !output.Retain {
 			paths = append(paths, output.Source())
 		}
 	}
-	for _, ff := range s.FilterFiles {
+	for _, ff := range job.FilterFiles {
 		paths = append(paths, ff)
 	}
-	if !s.ArchiveLogs {
+	if !job.ArchiveLogs {
 		paths = append(paths, "logs")
 	}
 
@@ -302,10 +302,10 @@ func (s *Job) ExcludeArguments() []string {
 // AddRequiredMetadata adds any required AVUs that are required but are missing
 // from Job.FileMetadata. This should be called after both of the New*()
 // functions and after the Job has been initialized from JSON.
-func (s *Job) AddRequiredMetadata() {
+func (job *Job) AddRequiredMetadata() {
 	foundAnalysis := false
 	foundExecution := false
-	for _, md := range s.FileMetadata {
+	for _, md := range job.FileMetadata {
 		if md.Attribute == "ipc-analysis-id" {
 			foundAnalysis = true
 		}
@@ -314,21 +314,21 @@ func (s *Job) AddRequiredMetadata() {
 		}
 	}
 	if !foundAnalysis {
-		s.FileMetadata = append(
-			s.FileMetadata,
+		job.FileMetadata = append(
+			job.FileMetadata,
 			FileMetadata{
 				Attribute: "ipc-analysis-id",
-				Value:     s.AppID,
+				Value:     job.AppID,
 				Unit:      "UUID",
 			},
 		)
 	}
 	if !foundExecution {
-		s.FileMetadata = append(
-			s.FileMetadata,
+		job.FileMetadata = append(
+			job.FileMetadata,
 			FileMetadata{
 				Attribute: "ipc-execution-id",
-				Value:     s.InvocationID,
+				Value:     job.InvocationID,
 				Unit:      "UUID",
 			},
 		)
@@ -338,20 +338,20 @@ func (s *Job) AddRequiredMetadata() {
 // FinalOutputArguments returns a string containing the arguments passed to
 // porklock for the final output operation, which transfers all files back into
 // iRODS.
-func (s *Job) FinalOutputArguments(excludeFilePath string) []string {
-	dest := s.OutputDirectory()
+func (job *Job) FinalOutputArguments(excludeFilePath string) []string {
+	dest := job.OutputDirectory()
 	retval := []string{
 		"put",
-		"--user", s.Submitter,
+		"--user", job.Submitter,
 		"--destination", dest,
 	}
-	for _, m := range MetadataArgs(s.FileMetadata).FileMetadataArguments() {
+	for _, m := range MetadataArgs(job.FileMetadata).FileMetadataArguments() {
 		retval = append(retval, m)
 	}
 	if excludeFilePath != "" {
 		retval = append(retval, "--exclude", excludeFilePath)
 	}
-	if s.SkipParentMetadata {
+	if job.SkipParentMetadata {
 		retval = append(retval, "--skip-parent-meta")
 	}
 	return retval
@@ -359,13 +359,13 @@ func (s *Job) FinalOutputArguments(excludeFilePath string) []string {
 
 // FormatUserGroups converts the list of user groups to the list format used by the
 // HTCondor job submission file.
-func (s *Job) FormatUserGroups() string {
-	return submitfile.FormatList(s.UserGroups)
+func (job *Job) FormatUserGroups() string {
+	return submitfile.FormatList(job.UserGroups)
 }
 
 // UsesVolumes returns a boolean value which indicates if any step of a job uses host-mounted volumes
-func (s *Job) UsesVolumes() bool {
-	for _, step := range s.Steps {
+func (job *Job) UsesVolumes() bool {
+	for _, step := range job.Steps {
 		if step.UsesVolumes() {
 			return true
 		}
@@ -373,7 +373,7 @@ func (s *Job) UsesVolumes() bool {
 	return false
 }
 
-// Returns a list of inputs that do not have download tickets.
+// FilterInputsWithoutTickets returns a list of inputs that do not have download tickets.
 func (job *Job) FilterInputsWithoutTickets() []StepInput {
 	var inputs []StepInput
 	for _, input := range job.Inputs() {
@@ -384,7 +384,7 @@ func (job *Job) FilterInputsWithoutTickets() []StepInput {
 	return inputs
 }
 
-// Returns a list of inputs that have download tickets.
+// FilterInputsWithTickets returns a list of inputs that have download tickets.
 func (job *Job) FilterInputsWithTickets() []StepInput {
 	var inputs []StepInput
 	for _, input := range job.Inputs() {
@@ -393,6 +393,51 @@ func (job *Job) FilterInputsWithTickets() []StepInput {
 		}
 	}
 	return inputs
+}
+
+// CPURequest calculates the highest maximum CPU among the steps of a job (i.e.
+// the largest slot size the job will need), or 0 if no steps have maximum CPUs
+// set
+func (job *Job) CPURequest() float32 {
+	var cpu float32
+
+	for _, step := range job.Steps {
+		if step.Component.Container.MaxCPUCores > cpu {
+			cpu = step.Component.Container.MaxCPUCores
+		}
+	}
+
+	return cpu
+}
+
+// MemoryRequest calculates the highest maximum memory among the steps of a job
+// (i.e.  the largest slot size the job will need), or 0 if no steps have
+// maximum memory set
+func (job *Job) MemoryRequest() int64 {
+	var mem int64
+
+	for _, step := range job.Steps {
+		if step.Component.Container.MemoryLimit > mem {
+			mem = step.Component.Container.MemoryLimit
+		}
+	}
+
+	return mem
+}
+
+// DiskRequest calculates the highest disk need among the steps of a job
+// (i.e.  the largest slot size the job will need), or 0 if no steps have
+// disk set. As we only track minimum disk space, it uses that number.
+func (job *Job) DiskRequest() int64 {
+	var disk int64
+
+	for _, step := range job.Steps {
+		if step.Component.Container.MinDiskSpace > disk {
+			disk = step.Component.Container.MinDiskSpace
+		}
+	}
+
+	return disk
 }
 
 // FileMetadata describes a unit of metadata that should get associated with

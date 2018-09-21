@@ -63,7 +63,7 @@ func (i *StepInput) Source() string {
 	return value
 }
 
-// Returns the porklock settings needed for a get command with an input path list.
+// InputSourceListArguments returns the porklock settings needed for a get command with an input path list.
 func (j *Job) InputSourceListArguments(sourceListPath string) []string {
 	args := []string{
 		"get",
