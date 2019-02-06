@@ -239,12 +239,6 @@
   version = "v6"
 
 [[projects]]
-  name = "gopkg.in/cyverse-de/model.v2"
-  packages = ["."]
-  revision = "92391a997e436287d0d3be91b67d9c171d104aeb"
-  version = "v2.12"
-
-[[projects]]
   name = "gopkg.in/cyverse-de/model.v4"
   packages = ["."]
   revision = "51f67b05d6a692a14a233651ef2f5d49d1323133"
@@ -259,6 +253,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b75ef2d12e02d5f8756a73551d66fb111581b7728e655246f913fed4cae67bfd"
+  inputs-digest = "3d552519df8342df86e97fd1032f000746d688803a7bceabbaa225a5455004d5"
   solver-name = "gps-cdcl"
   solver-version = 1
