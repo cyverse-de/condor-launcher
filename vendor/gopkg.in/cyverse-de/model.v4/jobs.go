@@ -1,3 +1,6 @@
+// Package model provides the data structures and various useful manipulations
+// and summaries thereof for CyVerse jobs and their subcomponents (like steps,
+// containers, interactive apps data, etc.)
 package model
 
 import (
@@ -55,6 +58,16 @@ func ExtractJobID(output []byte) []byte {
 	return thematch
 }
 
+// HTCondorExtraInfo is a type that contains extra info specific to the HTCondor execution platform
+type HTCondorExtraInfo struct {
+	ExtraRequirements string `json:"extra_requirements"`
+}
+
+// ExtraInfo is a type that contains extra execution-platform-specific info such as additional requirements
+type ExtraInfo struct {
+	HTCondor HTCondorExtraInfo `json:"htcondor"`
+}
+
 // Job is a type that contains info that goes into the jobs table.
 type Job struct {
 	AppDescription     string         `json:"app_description"`
@@ -71,6 +84,7 @@ type Job struct {
 	DateCompleted      time.Time      `json:"date_completed"`
 	Description        string         `json:"description"`
 	Email              string         `json:"email"`
+	Extra              ExtraInfo      `json:"extra"`
 	ExecutionTarget    string         `json:"execution_target"`
 	ExitCode           int            `json:"exit_code"`
 	FailureCount       int64          `json:"failure_count"`

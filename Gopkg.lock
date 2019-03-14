@@ -241,8 +241,8 @@
 [[projects]]
   name = "gopkg.in/cyverse-de/model.v4"
   packages = ["."]
-  revision = "51f67b05d6a692a14a233651ef2f5d49d1323133"
-  version = "v4.1"
+  revision = "f13a2e5cf15152f6103f6d76df117fc66324eb82"
+  version = "v4.3"
 
 [[projects]]
   branch = "v2"
