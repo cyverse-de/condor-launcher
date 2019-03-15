@@ -47,8 +47,8 @@
 
 [[constraint]]
   name = "gopkg.in/cyverse-de/model.v4"
-  version = "4.0.0"
+  version = "4.3.0"
 
 [[constraint]]
   name = "gopkg.in/cyverse-de/job-templates.v5"
-  version = "5.1.0"
+  version = "5.2.0"

@@ -49,7 +49,7 @@ var (
 const condorSubmissionTemplateText = `universe = vanilla
 executable = /usr/local/bin/road-runner
 rank = 100 - TotalLoadAvg
-requirements = HasDocker && (HAS_CYVERSE_ROAD_RUNNER =?= True){{ if .UsesVolumes }} && (HAS_HOST_MOUNTS =?= True){{ end }}{{- if .CPURequest }}
+requirements = HasDocker && (HAS_CYVERSE_ROAD_RUNNER =?= True){{ if .UsesVolumes }} && (HAS_HOST_MOUNTS =?= True){{ end }}{{ if .Extra.HTCondor.ExtraRequirements }} && ({{ .Extra.HTCondor.ExtraRequirements }}){{ end }}{{- if .CPURequest }}
 request_cpus = {{ .CPURequest }}{{ end }}{{- if .MemoryRequest }}
 request_memory = {{ condorBytes .MemoryRequest }}{{ end }}{{- if .DiskRequest }}
 request_disk = {{ condorBytes .DiskRequest }}{{ end }}
