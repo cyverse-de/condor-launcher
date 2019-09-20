@@ -409,39 +409,37 @@ func (job *Job) FilterInputsWithTickets() []StepInput {
 	return inputs
 }
 
-// CPURequest calculates the highest maximum CPU among the steps of a job (i.e.
-// the largest slot size the job will need), or 0 if no steps have maximum CPUs
-// set
+// CPURequest calculates the highest minimum CPU among the steps of a job (i.e.
+// the largest slot size the job will need), or 0 if no steps have min CPUs set.
 func (job *Job) CPURequest() float32 {
 	var cpu float32
 
 	for _, step := range job.Steps {
-		if step.Component.Container.MaxCPUCores > cpu {
-			cpu = step.Component.Container.MaxCPUCores
+		if step.Component.Container.MinCPUCores > cpu {
+			cpu = step.Component.Container.MinCPUCores
 		}
 	}
 
 	return cpu
 }
 
-// MemoryRequest calculates the highest maximum memory among the steps of a job
-// (i.e.  the largest slot size the job will need), or 0 if no steps have
-// maximum memory set
+// MemoryRequest calculates the highest minimum memory among the steps of a job
+// (i.e.  the largest slot size the job will need), or 0 if no steps have min
+// memory set.
 func (job *Job) MemoryRequest() int64 {
 	var mem int64
 
 	for _, step := range job.Steps {
-		if step.Component.Container.MemoryLimit > mem {
-			mem = step.Component.Container.MemoryLimit
+		if step.Component.Container.MinMemoryLimit > mem {
+			mem = step.Component.Container.MinMemoryLimit
 		}
 	}
 
 	return mem
 }
 
-// DiskRequest calculates the highest disk need among the steps of a job
-// (i.e.  the largest slot size the job will need), or 0 if no steps have
-// disk set. As we only track minimum disk space, it uses that number.
+// DiskRequest calculates the highest disk need among the steps of a job (i.e.
+// the largest slot size the job will need), or 0 if no steps have disk set.
 func (job *Job) DiskRequest() int64 {
 	var disk int64
 

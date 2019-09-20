@@ -2,69 +2,92 @@
 
 
 [[projects]]
+  digest = "1:671bc6fa192ce1a55a96aec6b5bc0a7026584fb2738ef66654206ad0ae488bdb"
   name = "github.com/cyverse-de/configurate"
   packages = ["."]
+  pruneopts = "U"
   revision = "31a2137ff467c28589b49e6fad093c9b339b583d"
   version = "0.2.3"
 
 [[projects]]
+  digest = "1:aa691ba176975b5fb6d73d8018ebb0cba717c9f85085ae0fce140c4ebc7272eb"
   name = "github.com/cyverse-de/logcabin"
   packages = ["."]
+  pruneopts = "U"
   revision = "fa67165f94282d904f7f908ca2edaa7e941f7557"
 
 [[projects]]
+  digest = "1:ef87a92a43b60d3fa0473722d2db595b94a908b530de290cc00f95faf73c5795"
   name = "github.com/cyverse-de/model"
   packages = ["submitfile"]
+  pruneopts = "U"
   revision = "bf8453314372d00979c0cdf7da069515acdbb6be"
   version = "v1"
 
 [[projects]]
   branch = "master"
+  digest = "1:adb3ad7ec97f837623943045e30e1f5ed936cf0cb06da8657a1b3b039af4678f"
   name = "github.com/cyverse-de/vaulter"
   packages = ["."]
+  pruneopts = "U"
   revision = "2b05d3d15d7be68297844cda09968c3d186b3211"
 
 [[projects]]
+  digest = "1:c3df0871df96d7dbb0e3d22be96f008fdcfdb5c6c4704cd01ee0926bb645f786"
   name = "github.com/cyverse-de/version"
   packages = ["."]
+  pruneopts = "U"
   revision = "5119d6500655edb891bd2a37a1e1d255f168bbb6"
 
 [[projects]]
+  digest = "1:55848e643a99a9dfceb19e090ce67111328fbb1780f34c62a0430994ff85fb90"
   name = "github.com/fatih/structs"
   packages = ["."]
+  pruneopts = "U"
   revision = "a720dfa8df582c51dee1b36feabb906bde1588bd"
   version = "v1.0"
 
 [[projects]]
+  digest = "1:d06e7ac122fa5b16e801c4009966fdf8188b03058d91c70c1dd5d34591c9afd4"
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
+  pruneopts = "U"
   revision = "f12c6236fe7b5cf6bcf30e5935d08cb079d78334"
 
 [[projects]]
   branch = "master"
+  digest = "1:304c322b62533a48ac052ffee80f67087fce1bc07186cd4e610a1b0e77765836"
   name = "github.com/hashicorp/errwrap"
   packages = ["."]
+  pruneopts = "U"
   revision = "7554cd9344cec97297fa6649b055a8c98c2a1e55"
 
 [[projects]]
   branch = "master"
+  digest = "1:f5d25fd7bdda08e39e01193ef94a1ebf7547b1b931bcdec785d08050598f306c"
   name = "github.com/hashicorp/go-cleanhttp"
   packages = ["."]
+  pruneopts = "U"
   revision = "d5fe4b57a186c716b0e00b8c301cbd9b4182694d"
 
 [[projects]]
   branch = "master"
+  digest = "1:6c5cfcff21ee0ea00fbcb45328e390dc5ae04349e23ca4ead9d9e11dca3ac412"
   name = "github.com/hashicorp/go-multierror"
   packages = ["."]
+  pruneopts = "U"
   revision = "b7773ae218740a7be65057fc60b366a49b538a44"
 
 [[projects]]
   branch = "master"
+  digest = "1:12e0414f6087349f1ce3017972c94e894d116cace16ab6efc9d7456c28ca91d6"
   name = "github.com/hashicorp/go-rootcerts"
   packages = ["."]
+  pruneopts = "U"
   revision = "6bb64b370b90e7ef1fa532be9e591a81c3493e00"
 
 [[projects]]
+  digest = "1:5118f7e1f84fef4970f4541dda751e7cf72f0be6f7be3e9abfa6c23d0da1a572"
   name = "github.com/hashicorp/hcl"
   packages = [
     ".",
@@ -75,137 +98,179 @@
     "hcl/token",
     "json/parser",
     "json/scanner",
-    "json/token"
+    "json/token",
   ]
+  pruneopts = "U"
   revision = "baeb59c710717b06aac1dbe2270e8192ec593244"
 
 [[projects]]
+  digest = "1:fb6c6841d090e4dac3690f2e09e383bf5091f794cd24bf172c74561b4ddd317f"
   name = "github.com/hashicorp/vault"
   packages = [
     "api",
     "helper/compressutil",
-    "helper/jsonutil"
+    "helper/jsonutil",
   ]
+  pruneopts = "U"
   revision = "cbb873d241f92e3b3443782bd9985a281e6c8e2f"
 
 [[projects]]
   branch = "master"
+  digest = "1:abde445510ed7b23086372c0bfdb607091e8118ca94ee853153a2d7709d65087"
   name = "github.com/kr/fs"
   packages = ["."]
+  pruneopts = "U"
   revision = "2788f0dbd16903de03cb8186e5c7d97b69ad387b"
 
 [[projects]]
+  digest = "1:d76b7b3cbfbdb2ef8cd79ba952b76e198d5a5ab833ba52900aac5b64eb7d0ccb"
   name = "github.com/magiconair/properties"
   packages = ["."]
+  pruneopts = "U"
   revision = "61b492c03cf472e0c6419be5899b8e0dc28b1b88"
 
 [[projects]]
   branch = "master"
+  digest = "1:59d11e81d6fdd12a771321696bb22abdd9a94d26ac864787e98c9b419e428734"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
+  pruneopts = "U"
   revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
 
 [[projects]]
+  digest = "1:12d6a272212cab463ba0dc10082d2c902d02b9e571c4d27e983b6a774873aa4a"
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
+  pruneopts = "U"
   revision = "ca63d7c062ee3c9f34db231e352b60012b4fd0c1"
 
 [[projects]]
+  digest = "1:4695c53c1975d06fdfc3e72b900d7cce9c7b8a402d32e636d142090a5285af4d"
   name = "github.com/pelletier/go-buffruneio"
   packages = ["."]
+  pruneopts = "U"
   revision = "df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d"
   version = "v0.1.0"
 
 [[projects]]
+  digest = "1:40b08c525b107cb77d53eb930fef4d6bceb498186fd6bcc984e1025d1f159c2d"
   name = "github.com/pelletier/go-toml"
   packages = ["."]
+  pruneopts = "U"
   revision = "5a62685873ef617233ab5f1b825a6e4a758e16cf"
 
 [[projects]]
+  digest = "1:7365acd48986e205ccb8652cc746f09c8b7876030d53710ea6ef7d0bd0dcd7ca"
   name = "github.com/pkg/errors"
   packages = ["."]
+  pruneopts = "U"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [[projects]]
+  digest = "1:4894148e27c6c9c2a65213fe3fc575dd04b05c5b7eb0a97faf690878e890a324"
   name = "github.com/pkg/sftp"
   packages = ["."]
+  pruneopts = "U"
   revision = "a71e8f580e3b622ebff585309160b1cc549ef4d2"
 
 [[projects]]
   branch = "master"
+  digest = "1:cc414e29ee352432fb59324301fd61b9123a71bf2a9df7994584e6cd3a241241"
   name = "github.com/sethgrid/pester"
   packages = ["."]
+  pruneopts = "U"
   revision = "ed9870dad3170c0b25ab9b11830cc57c3a7798fb"
 
 [[projects]]
+  digest = "1:f7e307638bc1d40188284f1364c14b78a727015f6fbcc2d372b92b8339b4503f"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
+  pruneopts = "U"
   revision = "547e984ad93a90192134fc0fdb57a468edb514fe"
 
 [[projects]]
+  digest = "1:9a39f83d3e357e48cdb92e72a5bcd4673c29f5ded61c49c137fe95d357628ff4"
   name = "github.com/spf13/afero"
   packages = [
     ".",
     "mem",
-    "sftp"
+    "sftp",
   ]
+  pruneopts = "U"
   revision = "20500e2abd0d1f4564a499e83d11d6c73cd58c27"
 
 [[projects]]
+  digest = "1:8c8f51ad1e1cab10f8ccc232dc38e8e5a2eaad5a1d9d406770b19069ebc11279"
   name = "github.com/spf13/cast"
   packages = ["."]
+  pruneopts = "U"
   revision = "e31f36ffc91a2ba9ddb72a4b6a607ff9b3d3cb63"
 
 [[projects]]
+  digest = "1:f0116a3f4f5b36e3917f7758c67a80488606288f87e716e88f11b845200cc003"
   name = "github.com/spf13/jwalterweatherman"
   packages = ["."]
+  pruneopts = "U"
   revision = "33c24e77fb80341fe7130ee7c594256ff08ccc46"
 
 [[projects]]
+  digest = "1:996684ef5eb5578ee81f70fd9fb126a84b10e0333ddfb3293ea8ba278b78d3e8"
   name = "github.com/spf13/pflag"
   packages = ["."]
+  pruneopts = "U"
   revision = "103ce5cd2042f2fe629c1957abb64ab3e7f50235"
 
 [[projects]]
+  digest = "1:9f882f2d5943e70772e428f431b0859bd2f107cb64db010777443d07ccfbb963"
   name = "github.com/spf13/viper"
   packages = ["."]
+  pruneopts = "U"
   revision = "16990631d4aa7e38f73dbbbf37fa13e67c648531"
 
 [[projects]]
   branch = "master"
+  digest = "1:080e4058a4217b073a629866cb31adc4b81b5daff22a9e2d9b36c2c2cc51c25a"
   name = "github.com/streadway/amqp"
   packages = ["."]
+  pruneopts = "U"
   revision = "e5adc2ada8b8efff032bf61173a233d143e9318e"
 
 [[projects]]
+  digest = "1:256dee8a124c460046335d22a8e5fb44163f8064ee5418b6c0492c029dcf3d8b"
   name = "golang.org/x/crypto"
   packages = [
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
-    "ssh"
+    "ssh",
   ]
+  pruneopts = "U"
   revision = "b13fc1fd382d01861b16b2e6474487d3d4d27f20"
 
 [[projects]]
   branch = "master"
+  digest = "1:6a893411bd330613e7f30883c387fce63fbcc0a42137bd06d1fc355d8ea206a6"
   name = "golang.org/x/net"
   packages = [
     "http/httpguts",
     "http2",
     "http2/hpack",
     "idna",
-    "lex/httplex"
+    "lex/httplex",
   ]
+  pruneopts = "U"
   revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
 
 [[projects]]
+  digest = "1:3f637f2b1ba4f98f70f006111f037ea41319e0118313c2c39b6c7c897b4902e8"
   name = "golang.org/x/sys"
   packages = ["unix"]
+  pruneopts = "U"
   revision = "a646d33e2ee3172a661fc09bca23bb4889a41bc8"
 
 [[projects]]
+  digest = "1:6f63e14e46cc9112e2eee235ba156b20706110dd6c268aa2d9b767d7b6b6943c"
   name = "golang.org/x/text"
   packages = [
     "collate",
@@ -221,38 +286,60 @@
     "unicode/bidi",
     "unicode/cldr",
     "unicode/norm",
-    "unicode/rangetable"
+    "unicode/rangetable",
   ]
+  pruneopts = "U"
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
 
 [[projects]]
+  digest = "1:5e67d41eefe95caa482d4fd2ad6b425cfc1362036044561da992c2be1af06316"
   name = "gopkg.in/cyverse-de/job-templates.v5"
   packages = ["."]
+  pruneopts = "U"
   revision = "09f37409be4f40d9d0dea8c4e2a5628df4d7fb7f"
   version = "v5.2"
 
 [[projects]]
+  digest = "1:3a235363b94c34158b23c50599474dc8f242f7c013327a1388f1e17f7625a440"
   name = "gopkg.in/cyverse-de/messaging.v6"
   packages = ["."]
+  pruneopts = "U"
   revision = "75e35ff8f1eb7027ead7ac9f1fdb5d0a51ed2bf4"
   version = "v6"
 
 [[projects]]
+  digest = "1:4df8721deee0478ec306fbb92a8dece17247ca060c0086bd0e0a14c62dab2598"
   name = "gopkg.in/cyverse-de/model.v4"
   packages = ["."]
-  revision = "f13a2e5cf15152f6103f6d76df117fc66324eb82"
-  version = "v4.3"
+  pruneopts = "U"
+  revision = "deb84d06e56c70d3b88054d0ee73406f19af4537"
+  version = "v4.4"
 
 [[projects]]
   branch = "v2"
+  digest = "1:59925e8b791ee90b60e4dc05099d34fd38d0922a2a8f9b4e700cb61fc421e6b2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
+  pruneopts = "U"
   revision = "e4d366fc3c7938e2958e662b4258c7a89e1f0e3e"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "3968f6f135bb9589aef3fc85697ff71aa65e12efeb97cff5b4d3da4b142b9b9b"
+  input-imports = [
+    "github.com/cyverse-de/configurate",
+    "github.com/cyverse-de/logcabin",
+    "github.com/cyverse-de/vaulter",
+    "github.com/cyverse-de/version",
+    "github.com/hashicorp/vault/api",
+    "github.com/pkg/errors",
+    "github.com/sirupsen/logrus",
+    "github.com/spf13/viper",
+    "github.com/streadway/amqp",
+    "gopkg.in/cyverse-de/job-templates.v5",
+    "gopkg.in/cyverse-de/messaging.v6",
+    "gopkg.in/cyverse-de/model.v4",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
