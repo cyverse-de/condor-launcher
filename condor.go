@@ -120,6 +120,16 @@ func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
 	}
 	log.Infof("generated the irods config for job %s", s.InvocationID)
 
+	sdir := s.CondorLogDirectory()
+	if path.Base(sdir) != "logs" {
+		sdir = path.Join(sdir, "logs")
+	}
+	fname = path.Join(sdir, "irods-config")
+	err = ioutil.WriteFile(fname, fileContent.Bytes(), 0644)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to write to file %s", fname)
+	}
+
 	if err = cl.v.StoreConfig(
 		childToken,
 		cl.cfg.GetString("vault.irods.mount_path"),
@@ -145,10 +155,12 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 		return "", errors.Wrapf(err, "failed to create the directory %s", sdir)
 	}
 
-	// Store the Condor configs in Vault.
-	childToken, err := cl.storeConfig(s)
-	if err != nil {
-		return "", err
+	if s.ExecutionTarget != "osg" {
+		// Write the irods configuration file to relevant locations
+		childToken, err := cl.storeConfig(s)
+		if err != nil {
+			return "", err
+		}
 	}
 
 	// Create a copy of the configuration that also contains the Vault child token.
