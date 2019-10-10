@@ -1,0 +1,5 @@
+amqp:
+  uri: amqp://guest:guest@wabbit:5672/fudd
+
+irods:
+  pass: "prodnaught"
