@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -124,7 +125,7 @@ func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
 	if path.Base(sdir) != "logs" {
 		sdir = path.Join(sdir, "logs")
 	}
-	fname = path.Join(sdir, "irods-config")
+	fname := path.Join(sdir, "irods-config")
 	err = ioutil.WriteFile(fname, fileContent.Bytes(), 0644)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed to write to file %s", fname)
@@ -155,9 +156,10 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 		return "", errors.Wrapf(err, "failed to create the directory %s", sdir)
 	}
 
+	var childToken string
 	if s.ExecutionTarget != "osg" {
 		// Write the irods configuration file to relevant locations
-		childToken, err := cl.storeConfig(s)
+		childToken, err = cl.storeConfig(s)
 		if err != nil {
 			return "", err
 		}
