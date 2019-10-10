@@ -33,7 +33,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
-	jobs "gopkg.in/cyverse-de/job-templates.v5"
+	jobs "gopkg.in/cyverse-de/job-templates.v6"
 )
 
 var log = logrus.WithFields(logrus.Fields{
