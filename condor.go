@@ -81,7 +81,6 @@ type CondorLauncher struct {
 	cfg          *viper.Viper
 	client       Messenger
 	fs           fsys
-	v            VaultOperator
 	condorSubmit string //path to the condor_submit executable
 	condorRm     string // path to the condor_rm executable
 }
@@ -97,15 +96,7 @@ func New(c *viper.Viper, client Messenger, fs fsys, condorSubmit, condorRm strin
 	}
 }
 
-func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
-	uselimit := len(s.Inputs()) + 2 // 2 comes from 1 for writing, one for the output job.
-
-	childToken, err := cl.v.ChildToken(uselimit)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to generate child token")
-	}
-	log.Infof("generated a child token for job %s", s.InvocationID)
-
+func (cl *CondorLauncher) storeConfig(s *model.Job) error {
 	cfgData := &IRODSConfig{
 		IRODSHost: cl.cfg.GetString("irods.host"),
 		IRODSPort: cl.cfg.GetString("irods.port"),
@@ -117,7 +108,7 @@ func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
 	}
 	fileContent, err := GenerateFile(IRODSConfigTemplate, cfgData)
 	if err != nil {
-		return "", err
+		return err
 	}
 	log.Infof("generated the irods config for job %s", s.InvocationID)
 
@@ -128,20 +119,10 @@ func (cl *CondorLauncher) storeConfig(s *model.Job) (string, error) {
 	fname := path.Join(sdir, "irods-config")
 	err = ioutil.WriteFile(fname, fileContent.Bytes(), 0644)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to write to file %s", fname)
+		return errors.Wrapf(err, "failed to write to file %s", fname)
 	}
 
-	if err = cl.v.StoreConfig(
-		childToken,
-		cl.cfg.GetString("vault.irods.mount_path"),
-		s.InvocationID,
-		fileContent.Bytes(),
-	); err != nil {
-		return "", err
-	}
-	log.Infof("stored the irods config for job %s in vault", s.InvocationID)
-
-	return childToken, nil
+	return nil
 }
 
 func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) (string, error) {
@@ -156,18 +137,16 @@ func (cl *CondorLauncher) launch(s *model.Job, condorPath, condorConfig string) 
 		return "", errors.Wrapf(err, "failed to create the directory %s", sdir)
 	}
 
-	var childToken string
 	if s.ExecutionTarget != "osg" {
 		// Write the irods configuration file to relevant locations
-		childToken, err = cl.storeConfig(s)
+		err = cl.storeConfig(s)
 		if err != nil {
 			return "", err
 		}
 	}
 
-	// Create a copy of the configuration that also contains the Vault child token.
+	// Create a copy of the configuration to use for job submission
 	cfgCopy := CopyConfig(cl.cfg)
-	cfgCopy.Set("vault.child_token.token", childToken)
 
 	// Generate the submission files, always using the condor job submission format for now.
 	jobSubmissionBuilder, err := jobs.NewJobSubmissionBuilder(s.ExecutionTarget, cfgCopy)
@@ -398,18 +377,6 @@ func main() {
 
 	condorPath := cfg.GetString("condor.path_env_var")
 	condorConfig := cfg.GetString("condor.condor_config")
-
-	launcher.v, err = VaultInit(
-		cfg.GetString("vault.token"),
-		cfg.GetString("vault.url"),
-	)
-	if err != nil {
-		log.Fatalf("%+v\n", err)
-	}
-
-	if err = launcher.v.MountCubbyhole(cfg.GetString("vault.irods.mount_path")); err != nil {
-		log.Fatalf("%+v\n", err)
-	}
 
 	ticker, err := startHeldTicker(
 		launcher,

@@ -48,20 +48,6 @@ func (t *tsys) WriteFile(path string, contents []byte, mode os.FileMode) error {
 	return nil
 }
 
-type VaultTester struct{}
-
-func (v *VaultTester) MountCubbyhole(mountPoint string) error {
-	return nil
-}
-
-func (v *VaultTester) ChildToken(numUses int) (string, error) {
-	return "", nil
-}
-
-func (v *VaultTester) StoreConfig(token, mountPoint, jobID string, config []byte) error {
-	return nil
-}
-
 func TestLaunch(t *testing.T) {
 	cfg := test.InitConfig(t)
 	test.InitPath(t)
@@ -87,7 +73,6 @@ func TestLaunch(t *testing.T) {
 	}
 	filesystem := newtsys()
 	cl := New(cfg, nil, filesystem, csPath, crPath)
-	cl.v = &VaultTester{}
 	if err != nil {
 		t.Error(err)
 	}

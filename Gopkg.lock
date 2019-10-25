@@ -19,21 +19,9 @@
   version = "v1"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/cyverse-de/vaulter"
-  packages = ["."]
-  revision = "2b05d3d15d7be68297844cda09968c3d186b3211"
-
-[[projects]]
   name = "github.com/cyverse-de/version"
   packages = ["."]
   revision = "5119d6500655edb891bd2a37a1e1d255f168bbb6"
-
-[[projects]]
-  name = "github.com/fatih/structs"
-  packages = ["."]
-  revision = "a720dfa8df582c51dee1b36feabb906bde1588bd"
-  version = "v1.0"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -41,38 +29,9 @@
   revision = "f12c6236fe7b5cf6bcf30e5935d08cb079d78334"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/hashicorp/errwrap"
-  packages = ["."]
-  revision = "7554cd9344cec97297fa6649b055a8c98c2a1e55"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/hashicorp/go-cleanhttp"
-  packages = ["."]
-  revision = "d5fe4b57a186c716b0e00b8c301cbd9b4182694d"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/hashicorp/go-multierror"
-  packages = ["."]
-  revision = "b7773ae218740a7be65057fc60b366a49b538a44"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/hashicorp/go-rootcerts"
-  packages = ["."]
-  revision = "6bb64b370b90e7ef1fa532be9e591a81c3493e00"
-
-[[projects]]
   name = "github.com/hashicorp/hcl"
   packages = [".","hcl/ast","hcl/parser","hcl/scanner","hcl/strconv","hcl/token","json/parser","json/scanner","json/token"]
   revision = "baeb59c710717b06aac1dbe2270e8192ec593244"
-
-[[projects]]
-  name = "github.com/hashicorp/vault"
-  packages = ["api","helper/compressutil","helper/jsonutil"]
-  revision = "cbb873d241f92e3b3443782bd9985a281e6c8e2f"
 
 [[projects]]
   branch = "master"
@@ -84,12 +43,6 @@
   name = "github.com/magiconair/properties"
   packages = ["."]
   revision = "61b492c03cf472e0c6419be5899b8e0dc28b1b88"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/mitchellh/go-homedir"
-  packages = ["."]
-  revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
 
 [[projects]]
   name = "github.com/mitchellh/mapstructure"
@@ -117,12 +70,6 @@
   name = "github.com/pkg/sftp"
   packages = ["."]
   revision = "a71e8f580e3b622ebff585309160b1cc549ef4d2"
-
-[[projects]]
-  branch = "master"
-  name = "github.com/sethgrid/pester"
-  packages = ["."]
-  revision = "ed9870dad3170c0b25ab9b11830cc57c3a7798fb"
 
 [[projects]]
   name = "github.com/sirupsen/logrus"
@@ -166,19 +113,13 @@
   revision = "b13fc1fd382d01861b16b2e6474487d3d4d27f20"
 
 [[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = ["http/httpguts","http2","http2/hpack","idna","lex/httplex"]
-  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
-
-[[projects]]
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "a646d33e2ee3172a661fc09bca23bb4889a41bc8"
 
 [[projects]]
   name = "golang.org/x/text"
-  packages = ["collate","collate/build","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","language","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable"]
+  packages = ["internal/gen","internal/triegen","internal/ucd","transform","unicode/cldr","unicode/norm"]
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
 
@@ -209,6 +150,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c7ebf5b95d591413017744a9883f50423f7ad237dfdc757d4e1e3ba090dc6505"
+  inputs-digest = "4e99bdfb939fb32e8896801b582df83a952883775ac22e24a34c65f320fd834c"
   solver-name = "gps-cdcl"
   solver-version = 1
