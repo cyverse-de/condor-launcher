@@ -257,7 +257,9 @@ func (cl *CondorLauncher) stopJob(invocationID, condorPath, condorConfig string)
 	}
 	log.Infof("condor_rm output for job %s:\n%s", invocationID, condorRMOutput)
 
-	cl.client.DeleteQueue(messaging.StopQueueName(invocationID))
+	if err = cl.client.DeleteQueue(messaging.StopQueueName(invocationID)); err != nil {
+		log.Errorf("%+v\n", errors.Wrap(err, "failed to delete queue"))
+	}
 
 	return nil
 }
@@ -322,10 +324,8 @@ func startHeldTicker(launcher *CondorLauncher, condorPath, condorConfig string) 
 	t := time.NewTicker(d)
 	go func(t *time.Ticker, launcher *CondorLauncher) {
 		for {
-			select {
-			case <-t.C:
-				killHeldJobs(launcher, condorPath, condorConfig)
-			}
+			<-t.C
+			killHeldJobs(launcher, condorPath, condorConfig)
 		}
 	}(t, launcher)
 	return t, nil
@@ -372,7 +372,10 @@ func main() {
 	defer client.Close()
 
 	launcher := New(cfg, client, &osys{}, csPath, crPath)
-	launcher.client.SetupPublishing(exchangeName)
+	err = launcher.client.SetupPublishing(exchangeName)
+	if err != nil {
+		log.Fatalf("%+v\n", errors.Wrap(err, "failed to setup publishing"))
+	}
 	go launcher.client.Listen()
 
 	condorPath := cfg.GetString("condor.path_env_var")
