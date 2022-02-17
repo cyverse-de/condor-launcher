@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/cyverse-de/configurate"
-	"github.com/cyverse-de/logcabin"
 	"github.com/cyverse-de/version"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -338,8 +337,6 @@ func main() {
 		err         error
 	)
 	flag.Parse()
-
-	logcabin.Init("condor-launcher", "condor-launcher")
 
 	if *showVersion {
 		version.AppVersion()

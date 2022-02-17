@@ -4,7 +4,6 @@ go 1.16
 
 require (
 	github.com/cyverse-de/configurate v0.0.0-20180510193728-31a2137ff467
-	github.com/cyverse-de/logcabin v0.0.0-20160926203711-fa67165f9428
 	github.com/cyverse-de/model v0.0.0-20170711180048-bf8453314372 // indirect
 	github.com/cyverse-de/version v0.0.0-20160721234331-5119d6500655
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -25,9 +24,7 @@ require (
 	github.com/spf13/viper v0.0.0-20160830143246-16990631d4aa
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
 	github.com/stretchr/testify v1.7.0 // indirect
-	golang.org/x/crypto v0.0.0-20160830154008-b13fc1fd382d // indirect
-	golang.org/x/sys v0.0.0-20160717071931-a646d33e2ee3 // indirect
-	golang.org/x/text v0.3.0 // indirect
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/cyverse-de/job-templates.v6 v6.0.0-20191010224106-1855b61f1b48
 	gopkg.in/cyverse-de/messaging.v6 v6.0.0
