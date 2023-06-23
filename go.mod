@@ -24,7 +24,7 @@ require (
 	github.com/spf13/viper v0.0.0-20160830143246-16990631d4aa
 	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
 	github.com/stretchr/testify v1.7.0 // indirect
-	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550 // indirect
+	golang.org/x/crypto v0.1.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/cyverse-de/job-templates.v6 v6.0.0-20191010224106-1855b61f1b48
 	gopkg.in/cyverse-de/messaging.v6 v6.0.0
