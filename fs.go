@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io/ioutil"
 	"os"
 )
 
@@ -19,5 +18,5 @@ func (o *osys) MkdirAll(path string, mode os.FileMode) error {
 }
 
 func (o *osys) WriteFile(path string, contents []byte, mode os.FileMode) error {
-	return ioutil.WriteFile(path, contents, mode)
+	return os.WriteFile(path, contents, mode)
 }

@@ -2,7 +2,7 @@ package test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"runtime"
@@ -76,7 +76,12 @@ func InitTestsFromFile(t *testing.T, cfg *viper.Viper, filename string) *model.J
 
 	// Load the job submission information from the file.
 	path := getTestFilePath(t, filename)
-	data, err := ioutil.ReadFile(path)
+	f, err := os.Open(path)
+	if err != nil {
+		t.Error(err)
+	}
+	defer f.Close()
+	data, err := io.ReadAll(f)
 	if err != nil {
 		t.Error(err)
 	}

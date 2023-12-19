@@ -17,7 +17,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -116,7 +115,7 @@ func (cl *CondorLauncher) storeConfig(s *model.Job) error {
 		sdir = path.Join(sdir, "logs")
 	}
 	fname := path.Join(sdir, "irods-config")
-	err = ioutil.WriteFile(fname, fileContent.Bytes(), 0644)
+	err = os.WriteFile(fname, fileContent.Bytes(), 0644)
 	if err != nil {
 		return errors.Wrapf(err, "failed to write to file %s", fname)
 	}
