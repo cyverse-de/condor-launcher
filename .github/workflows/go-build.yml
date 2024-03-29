@@ -1,0 +1,15 @@
+name: go-build
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+"
+
+jobs:
+  call-workflow-passing-data:
+    uses: cyverse-de/github-workflows/.github/workflows/go-build.yml@v0.0.10
+    with:
+      build-prerelease: ${{ contains(github.ref_name, '-rc') }}
+    secrets:
+      releases-repo-push-token: ${{ secrets.GH_DE_RELEASES_PUSH_TOKEN }}
