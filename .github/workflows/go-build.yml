@@ -8,7 +8,7 @@ on:
 
 jobs:
   call-workflow-passing-data:
-    uses: cyverse-de/github-workflows/.github/workflows/go-build.yml@v0.0.10
+    uses: cyverse-de/github-workflows/.github/workflows/go-build.yml@v0.1.0
     with:
       build-prerelease: ${{ contains(github.ref_name, '-rc') }}
     secrets:
